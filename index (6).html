@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bavaria Motors — Aankoopdashboard</title>
+<script>
+function loadScript(src, cb) {
+  var s = document.createElement('script');
+  s.src = src;
+  s.onload = cb;
+  s.onerror = function() { document.getElementById('login-status').textContent = 'Kon MSAL niet laden. Controleer internetverbinding.'; };
+  document.head.appendChild(s);
+}
+</script>
+<style>
+  :root {
+    --primary: #185FA5;
+    --primary-dark: #0C447C;
+    --primary-light: #E6F1FB;
+    --success: #3B6D11;
+    --success-light: #EAF3DE;
+    --danger: #A32D2D;
+    --danger-light: #FCEBEB;
+    --warning: #854F0B;
+    --warning-light: #FAEEDA;
+    --gray-50: #F8F8F7;
+    --gray-100: #F1EFE8;
+    --gray-200: #D3D1C7;
+    --gray-400: #888780;
+    --gray-600: #5F5E5A;
+    --gray-800: #2C2C2A;
+    --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-800); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Header */
+  #header {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    box-shadow: var(--shadow);
+  }
+  #header-left { display: flex; align-items: center; gap: 12px; }
+  #logo { font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: -0.3px; }
+  #logo span { color: var(--gray-400); font-weight: 400; }
+  #user-info { font-size: 13px; color: var(--gray-600); display: flex; align-items: center; gap: 8px; }
+  #user-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  #logout-btn { background: none; border: 1px solid var(--gray-200); padding: 5px 12px; border-radius: var(--radius); font-size: 12px; color: var(--gray-600); cursor: pointer; font-family: var(--font); }
+  #logout-btn:hover { border-color: var(--gray-400); color: var(--gray-800); }
+
+  /* Login scherm */
+  #login-screen {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+  }
+  #login-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 48px;
+    text-align: center;
+    max-width: 380px;
+    box-shadow: var(--shadow-md);
+  }
+  #login-card h2 { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+  #login-card p { font-size: 14px; color: var(--gray-600); margin-bottom: 28px; line-height: 1.5; }
+  #login-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-family: var(--font);
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+  }
+  #login-btn:hover { background: var(--primary-dark); }
+  #login-status { font-size: 13px; color: var(--gray-600); margin-top: 12px; }
+
+  /* Main layout */
+  #app { flex: 1; display: none; overflow: hidden; }
+  #app.visible { display: flex; }
+
+  /* Toolbar */
+  #toolbar {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 10px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  #search-input {
+    flex: 1;
+    max-width: 320px;
+    padding: 7px 12px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  #search-input:focus { border-color: var(--primary); }
+  .filter-select {
+    padding: 7px 10px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: var(--font);
+    background: white;
+    color: var(--gray-800);
+    outline: none;
+    cursor: pointer;
+  }
+  #refresh-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: var(--font);
+    cursor: pointer;
+    margin-left: auto;
+    font-weight: 500;
+  }
+  #refresh-btn:hover { background: var(--primary-dark); }
+  #record-count { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
+
+  /* Two-column layout */
+  #main-content { display: flex; flex: 1; overflow: hidden; }
+
+  /* Gallery */
+  #gallery {
+    width: 380px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--gray-200);
+    background: white;
+  }
+  .gallery-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+  }
+  .gallery-item:hover { background: var(--gray-50); }
+  .gallery-item.selected { background: var(--primary-light); border-left: 3px solid var(--primary); }
+  .gallery-item.selected { padding-left: 13px; }
+  .item-title { font-size: 14px; font-weight: 600; color: var(--gray-800); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-meta { font-size: 12px; color: var(--gray-600); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .badge-nieuw { background: var(--primary-light); color: var(--primary-dark); }
+  .badge-goedgekeurd { background: var(--success-light); color: var(--success); }
+  .badge-afgewezen { background: var(--danger-light); color: var(--danger); }
+  .badge-manueel { background: var(--warning-light); color: var(--warning); }
+  .badge-bron-email { background: #EAF3DE; color: #3B6D11; }
+  .badge-bron-whatsapp { background: #E1F5EE; color: #0F6E56; }
+  .badge-bron-website { background: var(--primary-light); color: var(--primary-dark); }
+
+  /* Detail panel */
+  #detail-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    background: var(--gray-50);
+  }
+  #detail-empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--gray-400);
+  }
+  #detail-empty svg { opacity: 0.3; }
+  #detail-empty p { font-size: 14px; }
+
+  #detail-content { display: none; }
+  #detail-content.visible { display: block; }
+
+  .detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+  .detail-title { font-size: 20px; font-weight: 700; color: var(--gray-800); }
+  .detail-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .btn-save {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: var(--font);
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-save:hover { background: var(--primary-dark); }
+  .btn-save:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; }
+  .btn-reject {
+    background: white;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: var(--font);
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-reject:hover { background: var(--danger-light); }
+
+  .detail-section {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--gray-400);
+    margin-bottom: 14px;
+  }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group.full { grid-column: 1 / -1; }
+  .field-label { font-size: 11px; color: var(--gray-600); font-weight: 500; }
+  .field-input {
+    padding: 8px 10px;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--gray-800);
+    background: white;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field-input:focus { border-color: var(--primary); }
+  .field-input[disabled] { background: var(--gray-50); color: var(--gray-600); cursor: not-allowed; }
+  select.field-input { cursor: pointer; }
+  textarea.field-input { resize: vertical; min-height: 100px; line-height: 1.5; }
+
+  .save-feedback {
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    display: none;
+    margin-top: 8px;
+  }
+  .save-feedback.success { display: block; background: var(--success-light); color: var(--success); }
+  .save-feedback.error { display: block; background: var(--danger-light); color: var(--danger); }
+
+  /* Loading */
+  #loading { padding: 40px; text-align: center; color: var(--gray-400); font-size: 14px; }
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--gray-200);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #error-msg { padding: 16px; background: var(--danger-light); color: var(--danger); border-radius: var(--radius); margin: 16px; font-size: 13px; }
+
+  /* Responsive aanpassing voor smalle vensters */
+  @media (max-width: 700px) {
+    #gallery { width: 100%; }
+    #detail-panel { display: none; }
+    #gallery.hide { display: none; }
+    #detail-panel.show { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-left">
+    <div id="logo">Bavaria<span> Motors</span></div>
+    <span style="color:var(--gray-200)">|</span>
+    <span style="font-size:13px;color:var(--gray-600)">Aankoopdashboard</span>
+  </div>
+  <div id="user-info">
+    <div id="user-dot">J</div>
+    <span id="user-name">Laden...</span>
+    <button id="logout-btn" onclick="logout()">Uitloggen</button>
+  </div>
+</div>
+
+<!-- Login scherm -->
+<div id="login-screen">
+  <div id="login-card">
+    <div style="font-size:36px;margin-bottom:12px">🏎</div>
+    <h2>Bavaria Motors</h2>
+    <p>Log in met je Microsoft account om het aankoopdashboard te openen.</p>
+    <button id="login-btn" onclick="login()">Inloggen met Microsoft</button>
+    <div id="login-status"></div>
+  </div>
+</div>
+
+<!-- Hoofdapp -->
+<div id="app">
+  <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+    <div id="toolbar">
+      <input type="text" id="search-input" placeholder="Zoeken op naam, wagen, bericht..." oninput="filterRecords()">
+      <select class="filter-select" id="filter-status" onchange="filterRecords()">
+        <option value="">Alle statussen</option>
+        <option value="102820000">Nieuw</option>
+        <option value="102820001">Goedgekeurd</option>
+        <option value="102820002">Manueel goedgekeurd</option>
+        <option value="102820003">Afgewezen</option>
+      </select>
+      <select class="filter-select" id="filter-bron" onchange="filterRecords()">
+        <option value="">Alle bronnen</option>
+        <option value="102820000">WhatsApp</option>
+        <option value="102820001">Website</option>
+        <option value="102820002">Email</option>
+      </select>
+      <span id="record-count"></span>
+      <button id="refresh-btn" onclick="loadData()">↻ Vernieuwen</button>
+    </div>
+    <div id="main-content">
+      <div id="gallery">
+        <div id="loading"><div class="spinner"></div>Aanbiedingen laden...</div>
+        <div id="error-msg" style="display:none"></div>
+      </div>
+      <div id="detail-panel">
+        <div id="detail-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          <p>Selecteer een aanbieding</p>
+        </div>
+        <div id="detail-content">
+          <div class="detail-header">
+            <div class="detail-title" id="d-titel"></div>
+            <div class="detail-actions">
+              <button class="btn-reject" onclick="rejectRecord()">Afwijzen</button>
+              <button class="btn-save" id="save-btn" onclick="saveRecord()">Opslaan</button>
+            </div>
+          </div>
+          <div id="save-feedback" class="save-feedback"></div>
+
+          <div class="detail-section">
+            <div class="section-title">Basisinformatie</div>
+            <div class="field-grid">
+              <div class="field-group">
+                <label class="field-label">Naam aanbieding</label>
+                <input class="field-input" type="text" id="d-naam" placeholder="Naam">
+              </div>
+              <div class="field-group">
+                <label class="field-label">Status</label>
+                <select class="field-input" id="d-status">
+                  <option value="102820000">Nieuw</option>
+                  <option value="102820001">Goedgekeurd</option>
+                  <option value="102820002">Manueel goedgekeurd</option>
+                  <option value="102820003">Afgewezen</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Bron</label>
+                <select class="field-input" id="d-bron">
+                  <option value="102820000">WhatsApp</option>
+                  <option value="102820001">Website</option>
+                  <option value="102820002">Email</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Type aanbieder</label>
+                <select class="field-input" id="d-type">
+                  <option value="102820000">Particulier</option>
+                  <option value="102820001">Handelaar</option>
+                  <option value="102820002">Importeur</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Datum binnenkomst</label>
+                <input class="field-input" type="text" id="d-datum" disabled>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Toegewezen aan</label>
+                <input class="field-input" type="text" id="d-toegewezen" placeholder="Naam medewerker">
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-title">AI Samenvatting</div>
+            <div class="field-group full">
+              <textarea class="field-input" id="d-samenvatting" rows="4" placeholder="AI-gegenereerde samenvatting..."></textarea>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="section-title">Ruwe brondata</div>
+            <div class="field-group full">
+              <textarea class="field-input" id="d-brondata" rows="6" placeholder="Origineel bericht / email inhoud..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── MSAL Configuratie ──────────────────────────────────────────────
+const msalConfig = {
+  auth: {
+    clientId: "20ea0053-8bb6-49b9-90a6-9198a80e746a",
+    authority: "https://login.microsoftonline.com/ca546dbe-173e-4472-a229-a1693f306e1c",
+    redirectUri: window.location.origin + window.location.pathname,
+    navigateToLoginRequestUrl: false
+  },
+  cache: {
+    cacheLocation: "sessionStorage",
+    storeAuthStateInCookie: false
+  }
+};
+
+const loginRequest = {
+  scopes: [
+    "https://org2dfe0154.crm4.dynamics.com/user_impersonation",
+    "User.Read"
+  ]
+};
+
+const DATAVERSE_URL = "https://org2dfe0154.crm4.dynamics.com/api/data/v9.2";
+const TABLE = "cre1c_aanbiedings";
+
+let msalInstance;
+let allRecords = [];
+let currentRecord = null;
+let currentToken = null;
+
+// ── Init ──────────────────────────────────────────────────────────
+async function initMsal() {
+  try {
+    msalInstance = new msal.PublicClientApplication(msalConfig);
+    await msalInstance.initialize();
+
+    // Verwerk redirect na login
+    const response = await msalInstance.handleRedirectPromise();
+
+    if (response && response.accessToken) {
+      currentToken = response.accessToken;
+      showApp(response.account);
+      await loadData();
+      return;
+    }
+
+    // Controleer of er al een account in de cache zit
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length > 0) {
+      try {
+        const silentResp = await msalInstance.acquireTokenSilent({
+          ...loginRequest,
+          account: accounts[0]
+        });
+        currentToken = silentResp.accessToken;
+        showApp(accounts[0]);
+        await loadData();
+      } catch (e) {
+        showLoginScreen();
+      }
+    } else {
+      showLoginScreen();
+    }
+  } catch (err) {
+    console.error('MSAL init error:', err);
+    showLoginScreen();
+    document.getElementById('login-status').textContent = 'Fout bij initialisatie: ' + err.message;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  loadScript('https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js', initMsal);
+});
+
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').classList.remove('visible');
+}
+
+function showApp(account) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  if (account) {
+    const name = account.name || account.username || 'Gebruiker';
+    document.getElementById('user-name').textContent = name;
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('user-dot').textContent = initials;
+  }
+}
+
+function waitForMsal() {
+  return new Promise((resolve, reject) => {
+    if (msalInstance) { resolve(); return; }
+    let tries = 0;
+    const iv = setInterval(() => {
+      tries++;
+      if (msalInstance) { clearInterval(iv); resolve(); }
+      else if (tries > 100) { clearInterval(iv); reject(new Error('MSAL niet geladen na 10 seconden')); }
+    }, 100);
+  });
+}
+
+async function login() {
+  const btn = document.getElementById('login-btn');
+  const status = document.getElementById('login-status');
+  btn.disabled = true;
+  status.textContent = 'Initialiseren...';
+  try {
+    await waitForMsal();
+    status.textContent = 'Doorsturen naar Microsoft...';
+    await msalInstance.loginRedirect(loginRequest);
+  } catch (err) {
+    status.textContent = 'Fout: ' + err.message;
+    btn.disabled = false;
+  }
+}
+
+function logout() {
+  if (!msalInstance) return;
+  msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.href });
+}
+
+async function getToken() {
+  const accounts = msalInstance.getAllAccounts();
+  if (!accounts.length) throw new Error('Niet ingelogd');
+  const resp = await msalInstance.acquireTokenSilent({ ...loginRequest, account: accounts[0] });
+  return resp.accessToken;
+}
+
+// ── Data laden ────────────────────────────────────────────────────
+async function loadData() {
+  const gallery = document.getElementById('gallery');
+  gallery.innerHTML = '<div id="loading"><div class="spinner"></div>Aanbiedingen laden...</div>';
+  try {
+    const token = await getToken();
+    const url = `${DATAVERSE_URL}/${TABLE}?$select=cre1c_aanbiedingnaam,cre1c_status,cre1c_bron,cre1c_typeaanbieder,cre1c_datumbinnenkomst,cre1c_toegewezenaan,cre1c_aisamenvatting,cre1c_ruwebrondata,cre1c_campagneverstuurd,cre1c_aanbiedingid&$orderby=cre1c_datumbinnenkomst desc&$top=200`;
+    const resp = await fetch(url, {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'OData-MaxVersion': '4.0',
+        'OData-Version': '4.0',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!resp.ok) {
+      const errText = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${errText.substring(0,200)}`);
+    }
+    const data = await resp.json();
+    allRecords = data.value || [];
+    renderGallery(allRecords);
+  } catch (err) {
+    gallery.innerHTML = '';
+    const errDiv = document.createElement('div');
+    errDiv.id = 'error-msg';
+    errDiv.style.display = 'block';
+    errDiv.textContent = 'Fout bij laden: ' + err.message;
+    gallery.appendChild(errDiv);
+    console.error(err);
+  }
+}
+
+// ── Gallery renderen ──────────────────────────────────────────────
+function renderGallery(records) {
+  const gallery = document.getElementById('gallery');
+  gallery.innerHTML = '';
+  document.getElementById('record-count').textContent = records.length + ' records';
+
+  if (!records.length) {
+    gallery.innerHTML = '<div style="padding:32px;text-align:center;color:var(--gray-400);font-size:13px">Geen resultaten gevonden</div>';
+    return;
+  }
+
+  records.forEach(r => {
+    const item = document.createElement('div');
+    item.className = 'gallery-item';
+    item.dataset.id = r.cre1c_aanbiedingid;
+
+    const statusBadge = getStatusBadge(r.cre1c_status);
+    const bronBadge = getBronBadge(r.cre1c_bron);
+    const datum = r.cre1c_datumbinnenkomst ? new Date(r.cre1c_datumbinnenkomst).toLocaleDateString('nl-BE') : '—';
+
+    item.innerHTML = `
+      <div class="item-title">${esc(r.cre1c_aanbiedingnaam || '(Naamloos)')}</div>
+      <div class="item-meta">
+        ${statusBadge}
+        ${bronBadge}
+        <span>${datum}</span>
+        ${r.cre1c_toegewezenaan ? '<span>👤 ' + esc(r.cre1c_toegewezenaan) + '</span>' : ''}
+      </div>
+    `;
+    item.addEventListener('click', () => selectRecord(r, item));
+    gallery.appendChild(item);
+  });
+}
+
+function filterRecords() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const status = document.getElementById('filter-status').value;
+  const bron = document.getElementById('filter-bron').value;
+
+  const filtered = allRecords.filter(r => {
+    const matchQ = !q || (r.cre1c_aanbiedingnaam || '').toLowerCase().includes(q)
+      || (r.cre1c_aisamenvatting || '').toLowerCase().includes(q)
+      || (r.cre1c_ruwebrondata || '').toLowerCase().includes(q);
+    const matchStatus = !status || String(r.cre1c_status) === status;
+    const matchBron = !bron || String(r.cre1c_bron) === bron;
+    return matchQ && matchStatus && matchBron;
+  });
+  renderGallery(filtered);
+}
+
+// ── Detail panel ──────────────────────────────────────────────────
+function selectRecord(r, el) {
+  document.querySelectorAll('.gallery-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  currentRecord = r;
+
+  document.getElementById('detail-empty').style.display = 'none';
+  document.getElementById('detail-content').classList.add('visible');
+  document.getElementById('save-feedback').className = 'save-feedback';
+
+  document.getElementById('d-titel').textContent = r.cre1c_aanbiedingnaam || '(Naamloos)';
+  document.getElementById('d-naam').value = r.cre1c_aanbiedingnaam || '';
+  document.getElementById('d-status').value = r.cre1c_status != null ? String(r.cre1c_status) : '102820000';
+  document.getElementById('d-bron').value = r.cre1c_bron != null ? String(r.cre1c_bron) : '102820002';
+  document.getElementById('d-type').value = r.cre1c_typeaanbieder != null ? String(r.cre1c_typeaanbieder) : '102820000';
+  document.getElementById('d-datum').value = r.cre1c_datumbinnenkomst ? new Date(r.cre1c_datumbinnenkomst).toLocaleDateString('nl-BE') : '';
+  document.getElementById('d-toegewezen').value = r.cre1c_toegewezenaan || '';
+  document.getElementById('d-samenvatting').value = r.cre1c_aisamenvatting || '';
+  document.getElementById('d-brondata').value = r.cre1c_ruwebrondata || '';
+}
+
+// ── Opslaan ───────────────────────────────────────────────────────
+async function saveRecord() {
+  if (!currentRecord) return;
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = 'Bezig...';
+
+  const payload = {
+    cre1c_aanbiedingnaam: document.getElementById('d-naam').value,
+    cre1c_status: parseInt(document.getElementById('d-status').value),
+    cre1c_bron: parseInt(document.getElementById('d-bron').value),
+    cre1c_typeaanbieder: parseInt(document.getElementById('d-type').value),
+    cre1c_toegewezenaan: document.getElementById('d-toegewezen').value,
+    cre1c_aisamenvatting: document.getElementById('d-samenvatting').value,
+    cre1c_ruwebrondata: document.getElementById('d-brondata').value
+  };
+
+  try {
+    const token = await getToken();
+    const id = currentRecord.cre1c_aanbiedingid;
+    const resp = await fetch(`${DATAVERSE_URL}/${TABLE}(${id})`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'OData-MaxVersion': '4.0',
+        'OData-Version': '4.0',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'If-Match': '*'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (resp.ok || resp.status === 204) {
+      // Update lokale cache
+      Object.assign(currentRecord, payload);
+      const fb = document.getElementById('save-feedback');
+      fb.className = 'save-feedback success';
+      fb.textContent = '✓ Opgeslagen';
+      setTimeout(() => fb.className = 'save-feedback', 3000);
+      // Update gallery titel
+      document.querySelector('.gallery-item.selected .item-title').textContent = payload.cre1c_aanbiedingnaam || '(Naamloos)';
+      document.getElementById('d-titel').textContent = payload.cre1c_aanbiedingnaam || '(Naamloos)';
+    } else {
+      const errText = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${errText.substring(0,200)}`);
+    }
+  } catch (err) {
+    const fb = document.getElementById('save-feedback');
+    fb.className = 'save-feedback error';
+    fb.textContent = 'Fout: ' + err.message;
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Opslaan';
+  }
+}
+
+async function rejectRecord() {
+  if (!currentRecord) return;
+  document.getElementById('d-status').value = '102820003';
+  await saveRecord();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getStatusBadge(val) {
+  const map = {
+    '102820000': ['badge-nieuw', 'Nieuw'],
+    '102820001': ['badge-goedgekeurd', 'Goedgekeurd'],
+    '102820002': ['badge-manueel', 'Manueel'],
+    '102820003': ['badge-afgewezen', 'Afgewezen']
+  };
+  const [cls, lbl] = map[String(val)] || ['badge-nieuw', 'Onbekend'];
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+function getBronBadge(val) {
+  const map = {
+    '102820000': ['badge-bron-whatsapp', 'WhatsApp'],
+    '102820001': ['badge-bron-website', 'Website'],
+    '102820002': ['badge-bron-email', 'Email']
+  };
+  const [cls, lbl] = map[String(val)] || ['badge-bron-email', '?'];
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+</script>
+</body>
+</html>
