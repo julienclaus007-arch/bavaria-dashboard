@@ -4,139 +4,346 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bavaria Motors — Aankoopdashboard</title>
-<script>
-function loadScript(src, cb) {
-  var s = document.createElement('script');
-  s.src = src;
-  s.onload = cb;
-  s.onerror = function() { document.getElementById('login-status').textContent = 'Kon MSAL niet laden.'; };
-  document.head.appendChild(s);
-}
-</script>
 <style>
 :root {
-  --primary: #185FA5; --primary-dark: #0C447C; --primary-light: #E6F1FB;
-  --success: #3B6D11; --success-light: #EAF3DE;
-  --danger: #A32D2D; --danger-light: #FCEBEB;
-  --warning: #854F0B; --warning-light: #FAEEDA;
-  --gray-50: #F8F8F7; --gray-100: #F1EFE8; --gray-200: #D3D1C7;
-  --gray-400: #888780; --gray-600: #5F5E5A; --gray-800: #2C2C2A;
+  --primary: #185FA5;
+  --primary-dark: #0C447C;
+  --primary-bg: rgba(24,95,165,0.14);
+  --success-bg: rgba(59,139,26,0.16);
+  --success-text: #7CC545;
+  --danger-bg: rgba(163,45,45,0.16);
+  --danger-text: #E07070;
+  --warning-bg: rgba(196,132,26,0.16);
+  --warning-text: #D4993A;
+  --bg: #0A0A0F;
+  --surface: #13131A;
+  --surface-hover: #1C1C27;
+  --border: #2A2A38;
+  --border-subtle: #1E1E2C;
+  --text-1: #F0F0F5;
+  --text-2: #8888A0;
+  --text-3: #55556A;
   --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-  --radius: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --r: 8px;
+  --r-lg: 12px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font); background: var(--gray-50); color: var(--gray-800); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-#header { background: white; border-bottom: 1px solid var(--gray-200); padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; box-shadow: var(--shadow); }
-#header-left { display: flex; align-items: center; gap: 12px; }
-#logo { font-size: 18px; font-weight: 700; color: var(--primary); letter-spacing: -0.3px; }
-#logo span { color: var(--gray-400); font-weight: 400; }
-#user-info { font-size: 13px; color: var(--gray-600); display: flex; align-items: center; gap: 8px; }
-#user-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
-#logout-btn { background: none; border: 1px solid var(--gray-200); padding: 5px 12px; border-radius: var(--radius); font-size: 12px; color: var(--gray-600); cursor: pointer; font-family: var(--font); }
-#logout-btn:hover { border-color: var(--gray-400); }
-#login-screen { flex: 1; display: flex; align-items: center; justify-content: center; }
-#login-card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 48px; text-align: center; max-width: 380px; width: 90%; box-shadow: var(--shadow-md); }
-#login-card h2 { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
-#login-card p { font-size: 14px; color: var(--gray-600); margin-bottom: 28px; line-height: 1.5; }
-#login-btn { background: var(--primary); color: white; border: none; padding: 12px 32px; border-radius: var(--radius); font-size: 15px; font-family: var(--font); font-weight: 600; cursor: pointer; width: 100%; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-1);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── SCROLLBARS ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── HEADER ── */
+#header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 10;
+}
+#header-left { display: flex; align-items: center; gap: 14px; }
+#logo { font-size: 17px; font-weight: 700; color: var(--text-1); letter-spacing: 0.4px; }
+#logo em { color: var(--primary); font-style: normal; }
+.hd { width: 1px; height: 18px; background: var(--border); }
+.hs { font-size: 11px; color: var(--text-3); letter-spacing: 1.2px; text-transform: uppercase; }
+#user-info { display: flex; align-items: center; gap: 10px; }
+#user-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+#user-name { font-size: 13px; color: var(--text-2); }
+#logout-btn {
+  background: none; border: 1px solid var(--border);
+  padding: 5px 12px; border-radius: var(--r);
+  font-size: 12px; color: var(--text-2);
+  cursor: pointer; font-family: var(--font);
+  transition: border-color .15s, color .15s;
+}
+#logout-btn:hover { border-color: var(--text-2); color: var(--text-1); }
+
+/* ── LOGIN ── */
+#login-screen {
+  flex: 1; display: flex; align-items: center;
+  justify-content: center; background: var(--bg);
+}
+#login-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 52px 48px;
+  text-align: center; max-width: 400px; width: 90%;
+}
+.lc-sub { font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; }
+#login-card h2 { font-size: 26px; font-weight: 300; color: var(--text-1); margin-bottom: 4px; letter-spacing: 0.5px; }
+#login-card h2 b { font-weight: 700; }
+.lc-loc { font-size: 11px; color: var(--text-3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.lc-brands { font-size: 12px; color: var(--text-2); margin-bottom: 32px; line-height: 1.7; }
+#login-btn {
+  background: var(--primary); color: #fff; border: none;
+  padding: 13px 32px; border-radius: var(--r);
+  font-size: 14px; font-family: var(--font); font-weight: 600;
+  cursor: pointer; width: 100%; transition: background .15s;
+}
 #login-btn:hover { background: var(--primary-dark); }
-#login-btn:disabled { background: var(--gray-200); cursor: not-allowed; color: var(--gray-400); }
-#login-status { font-size: 13px; color: var(--gray-600); margin-top: 12px; }
+#login-btn:disabled { background: var(--border); color: var(--text-3); cursor: not-allowed; }
+#login-status { font-size: 12px; color: var(--text-2); margin-top: 14px; min-height: 18px; }
+
+/* ── APP SHELL ── */
 #app { flex: 1; display: none; overflow: hidden; position: relative; }
 #app.visible { display: flex; }
 #app-inner { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-#toolbar { background: white; border-bottom: 1px solid var(--gray-200); padding: 10px 16px; display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
-#search-input { flex: 1; min-width: 160px; max-width: 240px; padding: 7px 12px; border: 1px solid var(--gray-200); border-radius: var(--radius); font-size: 13px; font-family: var(--font); outline: none; }
+
+/* ── TOOLBAR ── */
+#toolbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 9px 16px; display: flex; gap: 7px;
+  align-items: center; flex-shrink: 0; flex-wrap: wrap;
+}
+#sw { position: relative; flex: 1; min-width: 150px; max-width: 250px; }
+#sw svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+#search-input {
+  width: 100%; padding: 7px 10px 7px 30px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r); font-size: 13px; font-family: var(--font);
+  color: var(--text-1); outline: none; transition: border-color .15s;
+}
+#search-input::placeholder { color: var(--text-3); }
 #search-input:focus { border-color: var(--primary); }
-.filter-select { padding: 7px 8px; border: 1px solid var(--gray-200); border-radius: var(--radius); font-size: 13px; font-family: var(--font); background: white; color: var(--gray-800); outline: none; cursor: pointer; }
-#record-count { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
-#toolbar-right { margin-left: auto; display: flex; gap: 8px; }
-.btn-toolbar { border: none; padding: 7px 14px; border-radius: var(--radius); font-size: 13px; font-family: var(--font); cursor: pointer; font-weight: 500; }
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-dark); }
-.btn-secondary { background: white; color: var(--gray-600); border: 1px solid var(--gray-200); }
-.btn-secondary:hover { border-color: var(--gray-400); color: var(--gray-800); }
+.fsel {
+  padding: 7px 8px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r); font-size: 13px; font-family: var(--font);
+  color: var(--text-1); outline: none; cursor: pointer;
+}
+.fsel option { background: var(--surface); }
+.fsel:focus { border-color: var(--primary); }
+#rc { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+#tr { margin-left: auto; display: flex; gap: 7px; }
+.btn {
+  border: none; padding: 7px 14px; border-radius: var(--r);
+  font-size: 13px; font-family: var(--font); cursor: pointer;
+  font-weight: 500; transition: background .15s, border-color .15s, color .15s;
+}
+.btn-p { background: var(--primary); color: #fff; }
+.btn-p:hover { background: var(--primary-dark); }
+.btn-s { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+.btn-s:hover { border-color: var(--text-2); color: var(--text-1); }
+
+/* ── MAIN ── */
 #main-content { display: flex; flex: 1; overflow: hidden; }
-#gallery { width: 360px; flex-shrink: 0; overflow-y: auto; border-right: 1px solid var(--gray-200); background: white; }
-.gallery-item { padding: 12px 16px; border-bottom: 1px solid var(--gray-100); cursor: pointer; transition: background 0.1s; }
-.gallery-item:hover { background: var(--gray-50); }
-.gallery-item.selected { background: var(--primary-light); border-left: 3px solid var(--primary); padding-left: 13px; }
-.item-title { font-size: 13px; font-weight: 600; color: var(--gray-800); margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item-meta { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
-.badge { display: inline-block; padding: 2px 6px; border-radius: 20px; font-size: 10px; font-weight: 600; white-space: nowrap; }
-.b-nieuw { background: var(--primary-light); color: var(--primary-dark); }
-.b-goedgekeurd { background: var(--success-light); color: var(--success); }
-.b-afgewezen { background: var(--danger-light); color: var(--danger); }
-.b-manueel { background: var(--warning-light); color: var(--warning); }
-.b-particulier { background: #F1EFE8; color: #444441; }
-.b-handelaar { background: #EEEDFE; color: #3C3489; }
-.b-broker { background: #E1F5EE; color: #085041; }
-.b-email { background: #EAF3DE; color: #3B6D11; }
-.b-whatsapp { background: #E1F5EE; color: #0F6E56; }
-.b-website { background: var(--primary-light); color: var(--primary-dark); }
-.b-reallife { background: #FAEEDA; color: #854F0B; }
-.b-datum { font-size: 11px; color: var(--gray-400); }
-#gallery-loading { padding: 40px; text-align: center; color: var(--gray-400); font-size: 13px; }
-.spinner { width: 22px; height: 22px; border: 2px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
+
+/* ── GALLERY ── */
+#gallery {
+  width: 350px; flex-shrink: 0;
+  overflow-y: auto; border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+#gl-load { padding: 40px; text-align: center; color: var(--text-3); font-size: 13px; }
+.spin {
+  width: 20px; height: 20px; border: 2px solid var(--border);
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin .7s linear infinite; margin: 0 auto 10px;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
-#gallery-error { padding: 16px; background: var(--danger-light); color: var(--danger); border-radius: var(--radius); margin: 12px; font-size: 13px; display: none; }
-#detail-panel { flex: 1; overflow-y: auto; padding: 20px 24px; background: var(--gray-50); }
-#detail-empty { height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: var(--gray-400); }
-#detail-empty p { font-size: 14px; }
+.gi {
+  padding: 12px 14px 12px 17px;
+  border-bottom: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  cursor: pointer; transition: background .1s;
+}
+.gi:hover { background: var(--surface-hover); }
+.gi.sel { background: var(--surface-hover); border-left-color: var(--primary); }
+.gi-title { font-size: 13px; font-weight: 600; color: var(--text-1); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gi-title.nl { color: var(--text-3); font-style: italic; }
+.gi-sub { font-size: 11px; color: var(--text-2); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gi-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.gi-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.gi-date { font-size: 10px; color: var(--text-3); white-space: nowrap; flex-shrink: 0; }
+.gempty { padding: 48px 24px; text-align: center; color: var(--text-3); font-size: 13px; }
+.badge {
+  display: inline-block; padding: 2px 6px; border-radius: 20px;
+  font-size: 10px; font-weight: 600; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.bn  { background: rgba(24,95,165,.18);   color: #6EA8DA; border-color: rgba(24,95,165,.32); }
+.bg  { background: rgba(59,139,26,.18);   color: #7CC545; border-color: rgba(59,139,26,.32); }
+.bm  { background: rgba(133,79,11,.18);   color: #D4993A; border-color: rgba(133,79,11,.32); }
+.baf { background: rgba(163,45,45,.18);   color: #E07070; border-color: rgba(163,45,45,.32); }
+.bpa { background: rgba(100,100,130,.14); color: #9898B8; border-color: rgba(100,100,130,.25); }
+.bha { background: rgba(80,70,160,.18);   color: #9B8FD4; border-color: rgba(80,70,160,.32); }
+.bbr { background: rgba(20,130,110,.14);  color: #4DC4AA; border-color: rgba(20,130,110,.28); }
+.bwp { background: rgba(37,211,102,.11);  color: #4DD37A; border-color: rgba(37,211,102,.24); }
+.bwb { background: rgba(24,95,165,.14);   color: #6EA8DA; border-color: rgba(24,95,165,.28); }
+.bem { background: rgba(100,60,180,.14);  color: #A07FD4; border-color: rgba(100,60,180,.28); }
+.brl { background: rgba(196,132,26,.14);  color: #D4A447; border-color: rgba(196,132,26,.28); }
+
+/* ── DETAIL PANEL ── */
+#detail-panel { flex: 1; overflow-y: auto; background: var(--bg); display: flex; flex-direction: column; }
+#detail-empty {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 10px; color: var(--text-3);
+}
+#detail-empty svg { opacity: .25; }
+#detail-empty p { font-size: 13px; }
 #detail-content { display: none; }
-#detail-content.visible { display: block; }
-.detail-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
-.detail-title { font-size: 18px; font-weight: 700; color: var(--gray-800); }
-.detail-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.btn-action { padding: 7px 14px; border-radius: var(--radius); font-size: 13px; font-family: var(--font); font-weight: 500; cursor: pointer; border: 1px solid transparent; }
-.btn-save { background: var(--primary); color: white; border-color: var(--primary); }
-.btn-save:hover { background: var(--primary-dark); }
-.btn-save:disabled { background: var(--gray-200); color: var(--gray-400); border-color: var(--gray-200); cursor: not-allowed; }
-.btn-reject { background: white; color: var(--danger); border-color: var(--danger); }
-.btn-reject:hover { background: var(--danger-light); }
-.btn-delete { background: white; color: var(--gray-400); border-color: var(--gray-200); }
-.btn-delete:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger); }
-.save-feedback { padding: 8px 12px; border-radius: var(--radius); font-size: 13px; font-weight: 500; margin-bottom: 12px; display: none; }
-.save-feedback.success { display: block; background: var(--success-light); color: var(--success); }
-.save-feedback.error { display: block; background: var(--danger-light); color: var(--danger); }
-.save-feedback.info { display: block; background: var(--primary-light); color: var(--primary-dark); }
-.detail-section { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
-.section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--gray-400); margin-bottom: 12px; }
-.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.field-group { display: flex; flex-direction: column; gap: 4px; }
-.field-group.full { grid-column: 1 / -1; }
-.field-label { font-size: 11px; color: var(--gray-600); font-weight: 500; }
-.field-input { padding: 7px 10px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 13px; font-family: var(--font); color: var(--gray-800); background: white; outline: none; }
-.field-input:focus { border-color: var(--primary); }
-.field-input:disabled { background: var(--gray-50); color: var(--gray-600); cursor: not-allowed; }
-select.field-input { cursor: pointer; }
-textarea.field-input { resize: vertical; min-height: 90px; line-height: 1.5; }
-.ai-status { font-size: 11px; color: var(--gray-400); font-style: italic; margin-top: 4px; min-height: 16px; }
-.overlay { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
-.overlay.visible { display: flex; }
-.modal { background: white; border-radius: 12px; padding: 28px 32px; max-width: 400px; width: 92%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
-.modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; text-align: center; }
-.modal-msg { font-size: 13px; color: var(--gray-600); margin-bottom: 22px; line-height: 1.5; text-align: center; }
-.modal-actions { display: flex; gap: 10px; justify-content: center; }
-.btn-modal-cancel { background: white; color: var(--gray-800); border: 1px solid var(--gray-200); padding: 8px 20px; border-radius: var(--radius); font-size: 13px; font-family: var(--font); cursor: pointer; }
-.btn-modal-danger { background: var(--danger); color: white; border: none; padding: 8px 20px; border-radius: var(--radius); font-size: 13px; font-family: var(--font); font-weight: 600; cursor: pointer; }
-.btn-modal-danger:disabled { opacity: 0.6; cursor: not-allowed; }
-.modal-wide { max-width: 520px; }
-.modal-wide .field-group { margin-bottom: 10px; }
-.modal-wide .modal-actions { margin-top: 16px; }
-@media (max-width: 700px) { #gallery { width: 100%; } #detail-panel { display: none; } }
+#detail-content.vis { display: block; }
+#di { padding: 20px 24px 32px; }
+
+.dh { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; gap: 16px; }
+.dh-title { font-size: 19px; font-weight: 600; color: var(--text-1); line-height: 1.3; }
+.dh-actions { display: flex; gap: 7px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+
+.ba {
+  padding: 7px 14px; border-radius: var(--r);
+  font-size: 13px; font-family: var(--font);
+  font-weight: 500; cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.ba-save { background: var(--primary); color: #fff; border: 1px solid var(--primary); }
+.ba-save:hover { background: var(--primary-dark); }
+.ba-save:disabled { background: var(--border); color: var(--text-3); border-color: var(--border); cursor: not-allowed; }
+.ba-ok { background: var(--success-bg); color: var(--success-text); border: 1px solid rgba(59,139,26,.35); }
+.ba-ok:hover { background: rgba(59,139,26,.28); }
+.ba-rej { background: transparent; color: var(--danger-text); border: 1px solid rgba(163,45,45,.35); }
+.ba-rej:hover { background: var(--danger-bg); }
+.ba-del { background: transparent; color: var(--text-3); border: 1px solid var(--border); }
+.ba-del:hover { color: var(--danger-text); border-color: rgba(163,45,45,.4); background: var(--danger-bg); }
+
+/* ── SECTIONS ── */
+.ds {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 16px; margin-bottom: 12px;
+}
+.sh {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.sh.coll { cursor: pointer; user-select: none; }
+.sh.coll:hover .stog { color: var(--text-2); }
+.stit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-3); }
+.stog { font-size: 12px; color: var(--text-3); transition: transform .2s, color .15s; display: inline-block; }
+.stog.c { transform: rotate(-90deg); }
+.sb { }
+.sb.h { display: none; }
+
+.fg { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.f { display: flex; flex-direction: column; gap: 5px; }
+.f.full { grid-column: 1 / -1; }
+.fl { font-size: 11px; color: var(--text-2); font-weight: 500; letter-spacing: .3px; }
+.fi {
+  padding: 8px 10px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 13px; font-family: var(--font);
+  color: var(--text-1); outline: none; transition: border-color .15s;
+}
+.fi:focus { border-color: var(--primary); }
+.fi:disabled { color: var(--text-2); cursor: default; }
+.fi::placeholder { color: var(--text-3); }
+select.fi { cursor: pointer; }
+select.fi option { background: var(--surface); }
+textarea.fi { resize: vertical; min-height: 100px; line-height: 1.55; }
+.ai-hint { font-size: 11px; color: var(--text-3); font-style: italic; margin-top: 3px; min-height: 16px; }
+
+.bron-text {
+  font-size: 12px; color: var(--text-2);
+  line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+  padding: 10px 12px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 6px;
+  max-height: 260px; overflow-y: auto;
+}
+.bron-empty { font-size: 12px; color: var(--text-3); font-style: italic; }
+.comlog-ph {
+  font-size: 13px; color: var(--text-3); text-align: center;
+  padding: 24px; border: 1px dashed var(--border); border-radius: var(--r);
+  font-style: italic;
+}
+
+/* ── TOASTS ── */
+#tc {
+  position: fixed; bottom: 24px; right: 24px;
+  z-index: 9000; display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  padding: 11px 18px; border-radius: var(--r);
+  font-size: 13px; font-weight: 500; max-width: 340px;
+  pointer-events: auto; display: flex; align-items: center; gap: 8px;
+  animation: tin .22s ease;
+}
+@keyframes tin { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.t-ok  { background:#121E0A; border:1px solid rgba(59,139,26,.4);  color:var(--success-text); }
+.t-err { background:#1E0A0A; border:1px solid rgba(163,45,45,.4);  color:var(--danger-text); }
+.t-inf { background:#080F1E; border:1px solid rgba(24,95,165,.4);  color:#6EA8DA; }
+.t-wrn { background:#1E140A; border:1px solid rgba(196,132,26,.4); color:var(--warning-text); }
+
+/* ── OVERLAY / MODAL ── */
+.ov {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.65); z-index: 500;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(3px);
+}
+.ov.vis { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 28px 32px;
+  max-width: 420px; width: 92%;
+}
+.modal.wide { max-width: 540px; }
+.modal h3 { font-size: 16px; font-weight: 700; color: var(--text-1); margin-bottom: 8px; text-align: center; }
+.modal-msg { font-size: 13px; color: var(--text-2); margin-bottom: 22px; line-height: 1.5; text-align: center; }
+.modal-row { display: flex; gap: 10px; justify-content: center; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.mf { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.mf:last-of-type { margin-bottom: 0; }
+.mfoot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+.mb-cancel {
+  background: transparent; color: var(--text-2); border: 1px solid var(--border);
+  padding: 8px 20px; border-radius: var(--r); font-size: 13px;
+  font-family: var(--font); cursor: pointer;
+}
+.mb-cancel:hover { border-color: var(--text-2); color: var(--text-1); }
+.mb-danger {
+  background: #A32D2D; color: #fff; border: none;
+  padding: 8px 20px; border-radius: var(--r);
+  font-size: 13px; font-family: var(--font); font-weight: 600; cursor: pointer;
+}
+.mb-danger:hover { background: #C03030; }
+.mb-danger:disabled { opacity: .5; cursor: not-allowed; }
+.mb-primary {
+  background: var(--primary); color: #fff; border: none;
+  padding: 8px 20px; border-radius: var(--r);
+  font-size: 13px; font-family: var(--font); font-weight: 600; cursor: pointer;
+}
+.mb-primary:hover { background: var(--primary-dark); }
+.mb-primary:disabled { opacity: .5; cursor: not-allowed; }
+.new-err { font-size: 12px; color: var(--danger-text); margin-top: 8px; display: none; }
 </style>
 </head>
 <body>
 
 <div id="header">
   <div id="header-left">
-    <div id="logo">Bavaria<span> Motors</span></div>
-    <span style="color:var(--gray-200)">|</span>
-    <span style="font-size:13px;color:var(--gray-600)">Aankoopdashboard</span>
+    <div id="logo"><em>Bavaria</em> Motors</div>
+    <div class="hd"></div>
+    <span class="hs">Aankoopdashboard</span>
   </div>
   <div id="user-info">
-    <div id="user-dot">J</div>
+    <div id="user-avatar">BM</div>
     <span id="user-name">Laden...</span>
     <button id="logout-btn" onclick="logout()">Uitloggen</button>
   </div>
@@ -144,9 +351,10 @@ textarea.field-input { resize: vertical; min-height: 90px; line-height: 1.5; }
 
 <div id="login-screen">
   <div id="login-card">
-    <div style="font-size:36px;margin-bottom:12px">🏎</div>
-    <h2>Bavaria Motors</h2>
-    <p>Log in met je Microsoft account om het aankoopdashboard te openen.</p>
+    <div class="lc-sub">Bavaria Motors</div>
+    <h2><b>Aankoop</b>dashboard</h2>
+    <div class="lc-loc">Harelbeke · Premium Selection</div>
+    <div class="lc-brands">Ferrari · Porsche · Lamborghini<br>Aston Martin · Bugatti</div>
     <button id="login-btn" onclick="login()">Inloggen met Microsoft</button>
     <div id="login-status"></div>
   </div>
@@ -154,121 +362,155 @@ textarea.field-input { resize: vertical; min-height: 90px; line-height: 1.5; }
 
 <div id="app">
   <div id="app-inner">
+
     <div id="toolbar">
-      <input type="text" id="search-input" placeholder="Zoeken op naam, aanbieder, bericht..." oninput="filterRecords()">
-      <select class="filter-select" id="filter-status" onchange="filterRecords()">
+      <div id="sw">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search-input" placeholder="Zoeken..." oninput="filterRecords()">
+      </div>
+      <select class="fsel" id="fs" onchange="filterRecords()">
         <option value="">Alle statussen</option>
         <option value="102820000">Nieuw</option>
         <option value="102820001">Goedgekeurd</option>
         <option value="102820002">Manueel goedgekeurd</option>
         <option value="102820003">Afgewezen</option>
       </select>
-      <select class="filter-select" id="filter-bron" onchange="filterRecords()">
+      <select class="fsel" id="fb" onchange="filterRecords()">
         <option value="">Alle bronnen</option>
         <option value="102820000">WhatsApp</option>
         <option value="102820001">Website</option>
         <option value="102820002">Email</option>
         <option value="102820003">Real life</option>
       </select>
-      <select class="filter-select" id="filter-type" onchange="filterRecords()">
+      <select class="fsel" id="ft" onchange="filterRecords()">
         <option value="">Alle types</option>
         <option value="102820000">Particulier</option>
         <option value="102820001">Handelaar</option>
         <option value="102820002">Broker</option>
       </select>
-      <span id="record-count"></span>
-      <div id="toolbar-right">
-        <button class="btn-toolbar btn-secondary" onclick="loadData()">↻ Vernieuwen</button>
-        <button class="btn-toolbar btn-primary" onclick="openNewModal()">+ Nieuw</button>
+      <span id="rc"></span>
+      <div id="tr">
+        <button class="btn btn-s" onclick="loadData()">↻ Vernieuwen</button>
+        <button class="btn btn-p" onclick="openNew()">+ Nieuw</button>
       </div>
     </div>
+
     <div id="main-content">
+
+      <!-- LEFT: gallery -->
       <div id="gallery">
-        <div id="gallery-loading"><div class="spinner"></div>Aanbiedingen laden...</div>
-        <div id="gallery-error"></div>
+        <div id="gl-load"><div class="spin"></div>Aanbiedingen laden...</div>
       </div>
+
+      <!-- RIGHT: detail -->
       <div id="detail-panel">
         <div id="detail-empty">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2" opacity="0.3"/><line x1="3" y1="9" x2="21" y2="9" opacity="0.3"/><line x1="9" y1="21" x2="9" y2="9" opacity="0.3"/></svg>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1">
+            <rect x="3" y="3" width="18" height="18" rx="2.5"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
           <p>Selecteer een aanbieding</p>
         </div>
+
         <div id="detail-content">
-          <div class="detail-header">
-            <div class="detail-title" id="d-titel"></div>
-            <div class="detail-actions">
-              <button class="btn-action btn-delete" onclick="openDeleteConfirm()">Verwijderen</button>
-              <button class="btn-action btn-reject" onclick="rejectRecord()">Afwijzen</button>
-              <button class="btn-action btn-save" id="save-btn" onclick="saveRecord()">Opslaan</button>
-            </div>
-          </div>
-          <div id="save-feedback" class="save-feedback"></div>
-
-          <div class="detail-section">
-            <div class="section-title">Basisinformatie</div>
-            <div class="field-grid">
-              <div class="field-group">
-                <label class="field-label">Naam aanbieding</label>
-                <input class="field-input" type="text" id="d-naam" placeholder="Naam">
-              </div>
-              <div class="field-group">
-                <label class="field-label">Status</label>
-                <select class="field-input" id="d-status">
-                  <option value="102820000">Nieuw</option>
-                  <option value="102820001">Goedgekeurd</option>
-                  <option value="102820002">Manueel goedgekeurd</option>
-                  <option value="102820003">Afgewezen</option>
-                </select>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Naam aanbieder</label>
-                <input class="field-input" type="text" id="d-aanbieder" placeholder="Voor- en achternaam">
-              </div>
-              <div class="field-group">
-                <label class="field-label">Type aanbieder</label>
-                <select class="field-input" id="d-type">
-                  <option value="102820000">Particulier</option>
-                  <option value="102820001">Handelaar</option>
-                  <option value="102820002">Broker</option>
-                </select>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Bron</label>
-                <select class="field-input" id="d-bron">
-                  <option value="102820000">WhatsApp</option>
-                  <option value="102820001">Website</option>
-                  <option value="102820002">Email</option>
-                  <option value="102820003">Real life</option>
-                </select>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Toegewezen aan</label>
-                <select class="field-input" id="d-toegewezen">
-                  <option value="">— Niemand —</option>
-                  <option value="Lieven">Lieven</option>
-                  <option value="Thibault">Thibault</option>
-                  <option value="Valentin">Valentin</option>
-                  <option value="Julien">Julien</option>
-                </select>
-              </div>
-              <div class="field-group">
-                <label class="field-label">Datum binnenkomst</label>
-                <input class="field-input" type="text" id="d-datum" disabled>
+          <div id="di">
+            <div class="dh">
+              <div class="dh-title" id="d-titel"></div>
+              <div class="dh-actions">
+                <button class="ba ba-del" onclick="openDel()">Verwijderen</button>
+                <button class="ba ba-rej" onclick="rejectRecord()">Afwijzen</button>
+                <button class="ba ba-ok"  onclick="approveRecord()">Goedkeuren</button>
+                <button class="ba ba-save" id="save-btn" onclick="saveRecord()">Opslaan</button>
               </div>
             </div>
-          </div>
 
-          <div class="detail-section">
-            <div class="section-title">AI Samenvatting</div>
-            <div class="field-group full">
-              <textarea class="field-input" id="d-samenvatting" rows="5" placeholder="Wordt automatisch gegenereerd..."></textarea>
-              <div class="ai-status" id="ai-status"></div>
+            <!-- BASISINFORMATIE -->
+            <div class="ds">
+              <div class="sh"><div class="stit">Basisinformatie</div></div>
+              <div class="fg">
+                <div class="f">
+                  <label class="fl">Naam aanbieding</label>
+                  <input class="fi" type="text" id="d-naam" placeholder="Bv. Ferrari 488 GTB – Martens">
+                </div>
+                <div class="f">
+                  <label class="fl">Status</label>
+                  <select class="fi" id="d-status">
+                    <option value="102820000">Nieuw</option>
+                    <option value="102820001">Goedgekeurd</option>
+                    <option value="102820002">Manueel goedgekeurd</option>
+                    <option value="102820003">Afgewezen</option>
+                  </select>
+                </div>
+                <div class="f">
+                  <label class="fl">Naam aanbieder</label>
+                  <input class="fi" type="text" id="d-aanbieder" placeholder="Voor- en achternaam">
+                </div>
+                <div class="f">
+                  <label class="fl">Type aanbieder</label>
+                  <select class="fi" id="d-type">
+                    <option value="102820000">Particulier</option>
+                    <option value="102820001">Handelaar</option>
+                    <option value="102820002">Broker</option>
+                  </select>
+                </div>
+                <div class="f">
+                  <label class="fl">Bron</label>
+                  <select class="fi" id="d-bron">
+                    <option value="102820000">WhatsApp</option>
+                    <option value="102820001">Website</option>
+                    <option value="102820002">Email</option>
+                    <option value="102820003">Real life</option>
+                  </select>
+                </div>
+                <div class="f">
+                  <label class="fl">Toegewezen aan</label>
+                  <select class="fi" id="d-tgw">
+                    <option value="">— Niemand —</option>
+                    <option value="Lieven">Lieven</option>
+                    <option value="Thibault">Thibault</option>
+                    <option value="Valentin">Valentin</option>
+                    <option value="Julien">Julien</option>
+                  </select>
+                </div>
+                <div class="f">
+                  <label class="fl">Datum binnenkomst</label>
+                  <input class="fi" type="text" id="d-datum" disabled>
+                </div>
+                <div class="f">
+                  <label class="fl">Campagne verstuurd</label>
+                  <select class="fi" id="d-camp">
+                    <option value="false">Nee</option>
+                    <option value="true">Ja</option>
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="detail-section">
-            <div class="section-title">Ruwe brondata</div>
-            <div class="field-group full">
-              <textarea class="field-input" id="d-brondata" rows="6" placeholder="Origineel bericht / email inhoud..."></textarea>
+            <!-- AI SAMENVATTING -->
+            <div class="ds">
+              <div class="sh"><div class="stit">AI Samenvatting</div></div>
+              <div class="f full">
+                <textarea class="fi" id="d-sum" rows="5" placeholder="Nog geen samenvatting..."></textarea>
+                <div class="ai-hint" id="ai-hint"></div>
+              </div>
+            </div>
+
+            <!-- RUWE BRONDATA (collapsible) -->
+            <div class="ds">
+              <div class="sh coll" onclick="toggleSec('bron-body','bron-tog')">
+                <div class="stit">Ruwe brondata</div>
+                <span class="stog" id="bron-tog">▾</span>
+              </div>
+              <div class="sb" id="bron-body">
+                <div id="d-bron-txt"></div>
+              </div>
+            </div>
+
+            <!-- COMMUNICATIELOG -->
+            <div class="ds">
+              <div class="sh"><div class="stit">Communicatielog</div></div>
+              <div class="comlog-ph">Communicatielog wordt in een volgende versie toegevoegd.</div>
             </div>
           </div>
         </div>
@@ -276,51 +518,51 @@ textarea.field-input { resize: vertical; min-height: 90px; line-height: 1.5; }
     </div>
   </div>
 
-  <!-- Verwijder bevestiging -->
-  <div class="overlay" id="delete-overlay">
+  <!-- Delete confirm -->
+  <div class="ov" id="del-ov">
     <div class="modal">
       <h3>Record verwijderen?</h3>
-      <p class="modal-msg" id="delete-msg"></p>
-      <div class="modal-actions">
-        <button class="btn-modal-cancel" onclick="closeDeleteConfirm()">Annuleren</button>
-        <button class="btn-modal-danger" id="delete-confirm-btn" onclick="confirmDelete()">Definitief verwijderen</button>
+      <p class="modal-msg" id="del-msg"></p>
+      <div class="modal-row">
+        <button class="mb-cancel" onclick="closeDel()">Annuleren</button>
+        <button class="mb-danger" id="del-btn" onclick="confirmDel()">Definitief verwijderen</button>
       </div>
     </div>
   </div>
 
-  <!-- Nieuw record modal -->
-  <div class="overlay" id="new-overlay">
-    <div class="modal modal-wide">
-      <h3>Nieuwe aanbieding toevoegen</h3>
-      <div class="field-group">
-        <label class="field-label">Naam aanbieding *</label>
-        <input class="field-input" type="text" id="n-naam" placeholder="bv. Porsche 911 GT3 – Jan Janssen">
+  <!-- New record -->
+  <div class="ov" id="new-ov">
+    <div class="modal wide">
+      <h3>Nieuwe aanbieding</h3>
+      <div class="mf">
+        <label class="fl">Naam aanbieding *</label>
+        <input class="fi" type="text" id="n-naam" placeholder="Bv. Ferrari 488 GTB – Jan Janssen">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="field-group">
-          <label class="field-label">Naam aanbieder</label>
-          <input class="field-input" type="text" id="n-aanbieder" placeholder="Voor- en achternaam">
+      <div class="modal-grid">
+        <div class="mf" style="margin:0">
+          <label class="fl">Naam aanbieder</label>
+          <input class="fi" type="text" id="n-aanbdr" placeholder="Voor- en achternaam">
         </div>
-        <div class="field-group">
-          <label class="field-label">Type aanbieder</label>
-          <select class="field-input" id="n-type">
+        <div class="mf" style="margin:0">
+          <label class="fl">Type aanbieder</label>
+          <select class="fi" id="n-type">
             <option value="102820000">Particulier</option>
             <option value="102820001">Handelaar</option>
             <option value="102820002">Broker</option>
           </select>
         </div>
-        <div class="field-group">
-          <label class="field-label">Bron</label>
-          <select class="field-input" id="n-bron">
+        <div class="mf" style="margin:0">
+          <label class="fl">Bron</label>
+          <select class="fi" id="n-bron">
             <option value="102820000">WhatsApp</option>
             <option value="102820001">Website</option>
             <option value="102820002" selected>Email</option>
             <option value="102820003">Real life</option>
           </select>
         </div>
-        <div class="field-group">
-          <label class="field-label">Toegewezen aan</label>
-          <select class="field-input" id="n-toegewezen">
+        <div class="mf" style="margin:0">
+          <label class="fl">Toegewezen aan</label>
+          <select class="fi" id="n-tgw">
             <option value="">— Niemand —</option>
             <option value="Lieven">Lieven</option>
             <option value="Thibault">Thibault</option>
@@ -329,26 +571,27 @@ textarea.field-input { resize: vertical; min-height: 90px; line-height: 1.5; }
           </select>
         </div>
       </div>
-      <div class="field-group">
-        <label class="field-label">Beschrijving / bericht</label>
-        <textarea class="field-input" id="n-brondata" rows="4" placeholder="Wagendetails, contactinfo, opmerkingen..."></textarea>
+      <div class="mf" style="margin-top:10px">
+        <label class="fl">Samenvatting</label>
+        <textarea class="fi" id="n-sum" rows="3" placeholder="Beschrijving van het aanbod..."></textarea>
       </div>
-      <div id="new-error" style="font-size:13px;color:var(--danger);margin-top:8px;display:none;"></div>
-      <div class="modal-actions">
-        <button class="btn-modal-cancel" onclick="closeNewModal()">Annuleren</button>
-        <button class="btn-modal-danger" id="new-save-btn" onclick="saveNewRecord()" style="background:var(--primary);">Aanmaken</button>
+      <div class="new-err" id="new-err"></div>
+      <div class="mfoot">
+        <button class="mb-cancel" onclick="closeNew()">Annuleren</button>
+        <button class="mb-primary" id="new-btn" onclick="saveNew()">Aanmaken</button>
       </div>
     </div>
   </div>
 </div>
 
-<script>
-const MSAL_CDN = 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js';
-const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
-const DATAVERSE_URL = 'https://org2dfe0154.crm4.dynamics.com/api/data/v9.2';
-const TABLE = 'cre1c_aanbiedings';
+<div id="tc"></div>
 
-const msalConfig = {
+<script>
+const DV = 'https://org2dfe0154.crm4.dynamics.com/api/data/v9.2';
+const TBL = 'cre1c_aanbiedings';
+const WH  = 'https://clausjulien.app.n8n.cloud/webhook/bavaria-teamleader';
+
+const msalCfg = {
   auth: {
     clientId: '20ea0053-8bb6-49b9-90a6-9198a80e746a',
     authority: 'https://login.microsoftonline.com/ca546dbe-173e-4472-a229-a1693f306e1c',
@@ -357,458 +600,369 @@ const msalConfig = {
   },
   cache: { cacheLocation: 'sessionStorage', storeAuthStateInCookie: false }
 };
+const loginReq = { scopes: ['https://org2dfe0154.crm4.dynamics.com/user_impersonation','User.Read'] };
 
-const loginRequest = {
-  scopes: ['https://org2dfe0154.crm4.dynamics.com/user_impersonation', 'User.Read']
-};
+let msal, allRec = [], cur = null;
 
-let msalInstance, allRecords = [], currentRecord = null, aiAbortController = null;
+/* ── bootstrap ── */
+function loadScript(src, cb) {
+  const s = document.createElement('script');
+  s.src = src; s.onload = cb;
+  s.onerror = () => { document.getElementById('login-status').textContent = 'MSAL kon niet geladen worden.'; };
+  document.head.appendChild(s);
+}
 
-// ── Init ──────────────────────────────────────────────────────────
 async function initMsal() {
   try {
-    msalInstance = new msal.PublicClientApplication(msalConfig);
-    await msalInstance.initialize();
-    const redirectResp = await msalInstance.handleRedirectPromise();
-    if (redirectResp && redirectResp.account) {
-      showApp(redirectResp.account);
-      await loadData();
-      return;
-    }
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length > 0) {
+    msal = new window.msal.PublicClientApplication(msalCfg);
+    await msal.initialize();
+    const rr = await msal.handleRedirectPromise();
+    if (rr?.account) { showApp(rr.account); await loadData(); return; }
+    const accs = msal.getAllAccounts();
+    if (accs.length) {
       try {
-        const r = await msalInstance.acquireTokenSilent({ ...loginRequest, account: accounts[0] });
-        showApp(r.account);
-        await loadData();
-        return;
-      } catch(e) {}
+        const r = await msal.acquireTokenSilent({ ...loginReq, account: accs[0] });
+        showApp(r.account); await loadData(); return;
+      } catch {}
     }
-    showLoginScreen();
-  } catch(err) {
-    showLoginScreen();
-    document.getElementById('login-status').textContent = 'Fout: ' + err.message;
+    showLogin();
+  } catch(e) {
+    showLogin();
+    document.getElementById('login-status').textContent = 'Fout: ' + e.message;
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => loadScript(MSAL_CDN, initMsal));
+window.addEventListener('DOMContentLoaded', () =>
+  loadScript('https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js', initMsal)
+);
 
-function showLoginScreen() {
+function showLogin() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').classList.remove('visible');
 }
-
-function showApp(account) {
+function showApp(acc) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
-  const name = account.name || account.username || 'Gebruiker';
-  document.getElementById('user-name').textContent = name;
-  document.getElementById('user-dot').textContent = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-}
-
-function waitForMsal() {
-  return new Promise((res, rej) => {
-    if (msalInstance) { res(); return; }
-    let t = 0;
-    const iv = setInterval(() => {
-      if (msalInstance) { clearInterval(iv); res(); }
-      else if (++t > 100) { clearInterval(iv); rej(new Error('MSAL timeout')); }
-    }, 100);
-  });
+  const n = acc.name || acc.username || 'Gebruiker';
+  document.getElementById('user-name').textContent = n;
+  document.getElementById('user-avatar').textContent = n.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
 }
 
 async function login() {
   const btn = document.getElementById('login-btn');
-  const st = document.getElementById('login-status');
-  btn.disabled = true; st.textContent = 'Doorsturen naar Microsoft...';
+  btn.disabled = true;
+  document.getElementById('login-status').textContent = 'Doorsturen naar Microsoft...';
   try {
-    await waitForMsal();
-    await msalInstance.loginRedirect(loginRequest);
-  } catch(err) {
-    st.textContent = 'Fout: ' + err.message;
+    if (!msal) await new Promise((res,rej) => {
+      let t=0; const iv=setInterval(()=>{ if(msal){clearInterval(iv);res();} else if(++t>100){clearInterval(iv);rej(new Error('timeout'));} },100);
+    });
+    await msal.loginRedirect(loginReq);
+  } catch(e) {
+    document.getElementById('login-status').textContent = 'Fout: ' + e.message;
     btn.disabled = false;
   }
 }
+function logout() { if(msal) msal.logoutRedirect({ postLogoutRedirectUri: location.href }); }
 
-function logout() {
-  if (msalInstance) msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.href });
+async function token() {
+  const accs = msal.getAllAccounts();
+  if (!accs.length) throw new Error('Niet ingelogd');
+  return (await msal.acquireTokenSilent({ ...loginReq, account: accs[0] })).accessToken;
 }
 
-async function getToken() {
-  const accounts = msalInstance.getAllAccounts();
-  if (!accounts.length) throw new Error('Niet ingelogd');
-  const r = await msalInstance.acquireTokenSilent({ ...loginRequest, account: accounts[0] });
-  return r.accessToken;
+function dvH(tok) {
+  return { Authorization:'Bearer '+tok, 'OData-MaxVersion':'4.0', 'OData-Version':'4.0',
+           Accept:'application/json', 'Content-Type':'application/json' };
 }
 
-// ── Data laden ────────────────────────────────────────────────────
+/* ── load data ── */
 async function loadData() {
-  document.getElementById('gallery-loading').style.display = 'block';
-  document.getElementById('gallery-error').style.display = 'none';
+  const gl = document.getElementById('gl-load');
+  gl.style.display = 'block';
+  gl.innerHTML = '<div class="spin"></div>Aanbiedingen laden...';
+  document.querySelectorAll('.gi,.gempty').forEach(e=>e.remove());
   try {
-    const token = await getToken();
-    const url = `${DATAVERSE_URL}/${TABLE}?$select=cre1c_aanbiedingnaam,cre1c_status,cre1c_bron,cre1c_typeaanbieder,cre1c_datumbinnenkomst,cre1c_toegewezenaan,cre1c_aisamenvatting,cre1c_ruwebrondata,cre1c_aanbiedingid&$orderby=cre1c_datumbinnenkomst desc&$top=250`;
-    const resp = await fetch(url, { headers: dvHeaders(token) });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    // Verberg afgewezen standaard niet, maar filter spam via AI bij selectie
-    allRecords = data.value || [];
-    renderGallery(allRecords);
-  } catch(err) {
-    document.getElementById('gallery-loading').style.display = 'none';
-    const e = document.getElementById('gallery-error');
-    e.style.display = 'block';
-    e.textContent = 'Fout bij laden: ' + err.message;
+    const tok = await token();
+    const sel = 'cre1c_aanbiedingnaam,cre1c_naamaanbieder,cre1c_aisamenvatting,cre1c_ruwebrondata,cre1c_bron,cre1c_status,cre1c_typeaanbieder,cre1c_datumbinnenkomst,cre1c_toegewezenaan,cre1c_campagneverstuurd,cre1c_aanbiedingid';
+    const url = `${DV}/${TBL}?$select=${sel}&$orderby=cre1c_datumbinnenkomst desc&$top=500`;
+    const r = await fetch(url, { headers: dvH(tok) });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    allRec = (await r.json()).value || [];
+    renderGallery();
+  } catch(e) {
+    gl.innerHTML = `<div style="color:var(--danger-text);font-size:13px;padding:16px">Fout: ${esc(e.message)}</div>`;
   }
 }
 
-function dvHeaders(token) {
-  return {
-    'Authorization': 'Bearer ' + token,
-    'OData-MaxVersion': '4.0', 'OData-Version': '4.0',
-    'Accept': 'application/json', 'Content-Type': 'application/json'
-  };
-}
+/* ── gallery ── */
+function renderGallery() {
+  const q  = (document.getElementById('search-input').value||'').toLowerCase();
+  const fs = document.getElementById('fs').value;
+  const fb = document.getElementById('fb').value;
+  const ft = document.getElementById('ft').value;
 
-// ── Gallery ───────────────────────────────────────────────────────
-function renderGallery(records) {
-  document.getElementById('gallery-loading').style.display = 'none';
-  // Verberg afgewezen records standaard tenzij filter actief
-  const statusFilter = document.getElementById('filter-status').value;
-  const visible = statusFilter ? records : records.filter(r => String(r.cre1c_status) !== '102820003');
-  document.getElementById('record-count').textContent = visible.length + ' records';
+  const vis = allRec.filter(r => {
+    if (!fs && String(r.cre1c_status) === '102820003') return false;
+    if (fs && String(r.cre1c_status) !== fs) return false;
+    if (fb && String(r.cre1c_bron) !== fb) return false;
+    if (ft && String(r.cre1c_typeaanbieder) !== ft) return false;
+    if (q) {
+      const hay = [r.cre1c_aanbiedingnaam,r.cre1c_naamaanbieder,r.cre1c_aisamenvatting,r.cre1c_ruwebrondata].filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('gl-load').style.display = 'none';
+  document.getElementById('rc').textContent = vis.length + ' records';
+
   const g = document.getElementById('gallery');
-  g.querySelectorAll('.gallery-item, .gallery-empty').forEach(i => i.remove());
+  g.querySelectorAll('.gi,.gempty').forEach(e=>e.remove());
 
-  if (!visible.length) {
-    const empty = document.createElement('div');
-    empty.className = 'gallery-empty';
-    empty.style.cssText = 'padding:32px;text-align:center;color:var(--gray-400);font-size:13px';
-    empty.textContent = 'Geen resultaten';
-    g.appendChild(empty);
-    return;
+  if (!vis.length) {
+    const e = document.createElement('div'); e.className='gempty'; e.textContent='Geen resultaten gevonden.'; g.appendChild(e); return;
   }
 
-  visible.forEach(r => {
-    const item = document.createElement('div');
-    item.className = 'gallery-item';
-    item.dataset.id = r.cre1c_aanbiedingid;
-    const datum = r.cre1c_datumbinnenkomst ? new Date(r.cre1c_datumbinnenkomst).toLocaleDateString('nl-BE') : '';
-    item.innerHTML = `
-      <div class="item-title">${esc(r.cre1c_aanbiedingnaam || '(Naamloos)')}</div>
-      <div class="item-meta">
-        ${statusBadge(r.cre1c_status)}
-        ${typeBadge(r.cre1c_typeaanbieder)}
-        ${bronBadge(r.cre1c_bron)}
-        ${datum ? '<span class="b-datum">' + datum + '</span>' : ''}
+  vis.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'gi' + (cur?.cre1c_aanbiedingid === r.cre1c_aanbiedingid ? ' sel' : '');
+    el.dataset.id = r.cre1c_aanbiedingid;
+    const naam = r.cre1c_aanbiedingnaam;
+    const sub  = r.cre1c_naamaanbieder || '';
+    const dat  = r.cre1c_datumbinnenkomst ? new Date(r.cre1c_datumbinnenkomst).toLocaleDateString('nl-BE') : '';
+    el.innerHTML = `
+      <div class="gi-title${naam?'':' nl'}">${esc(naam||'Naamloos')}</div>
+      ${sub ? `<div class="gi-sub">${esc(sub)}</div>` : ''}
+      <div class="gi-row">
+        <div class="gi-tags">${sBadge(r.cre1c_status)}${tBadge(r.cre1c_typeaanbieder)}${bBadge(r.cre1c_bron)}</div>
+        ${dat ? `<span class="gi-date">${dat}</span>` : ''}
       </div>`;
-    item.addEventListener('click', () => selectRecord(r, item));
-    g.appendChild(item);
+    el.addEventListener('click', () => selectRec(r, el));
+    g.appendChild(el);
   });
 }
+function filterRecords() { renderGallery(); }
 
-function filterRecords() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const fs = document.getElementById('filter-status').value;
-  const fb = document.getElementById('filter-bron').value;
-  const ft = document.getElementById('filter-type').value;
-  renderGallery(allRecords.filter(r =>
-    (!q || (r.cre1c_aanbiedingnaam||'').toLowerCase().includes(q) ||
-            (r.cre1c_ruwebrondata||'').toLowerCase().includes(q) ||
-            (r.cre1c_aisamenvatting||'').toLowerCase().includes(q)) &&
-    (!fs || String(r.cre1c_status) === fs) &&
-    (!fb || String(r.cre1c_bron) === fb) &&
-    (!ft || String(r.cre1c_typeaanbieder) === ft)
-  ));
-}
-
-// ── Detail ────────────────────────────────────────────────────────
-function selectRecord(r, el) {
-  document.querySelectorAll('.gallery-item').forEach(i => i.classList.remove('selected'));
-  el.classList.add('selected');
-  currentRecord = r;
+/* ── select record ── */
+function selectRec(r, el) {
+  document.querySelectorAll('.gi.sel').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  cur = r;
 
   document.getElementById('detail-empty').style.display = 'none';
-  document.getElementById('detail-content').classList.add('visible');
-  document.getElementById('save-feedback').className = 'save-feedback';
+  document.getElementById('detail-content').classList.add('vis');
 
-  document.getElementById('d-titel').textContent = r.cre1c_aanbiedingnaam || '(Naamloos)';
-  document.getElementById('d-naam').value = r.cre1c_aanbiedingnaam || '';
-  document.getElementById('d-status').value = r.cre1c_status != null ? String(r.cre1c_status) : '102820000';
-  document.getElementById('d-bron').value = r.cre1c_bron != null ? String(r.cre1c_bron) : '102820002';
-  document.getElementById('d-type').value = r.cre1c_typeaanbieder != null ? String(r.cre1c_typeaanbieder) : '102820000';
-  document.getElementById('d-datum').value = r.cre1c_datumbinnenkomst ? new Date(r.cre1c_datumbinnenkomst).toLocaleDateString('nl-BE') : '';
-  document.getElementById('d-toegewezen').value = r.cre1c_toegewezenaan || '';
-  document.getElementById('d-aanbieder').value = r.cre1c_aanbiedingid ? (r._d_aanbieder || '') : '';
-  document.getElementById('d-samenvatting').value = r.cre1c_aisamenvatting || '';
-  document.getElementById('d-brondata').value = r.cre1c_ruwebrondata || '';
+  document.getElementById('d-titel').textContent = r.cre1c_aanbiedingnaam || 'Naamloos';
+  document.getElementById('d-naam').value    = r.cre1c_aanbiedingnaam || '';
+  document.getElementById('d-aanbieder').value = r.cre1c_naamaanbieder || '';
+  document.getElementById('d-status').value  = r.cre1c_status != null ? String(r.cre1c_status) : '102820000';
+  document.getElementById('d-bron').value    = r.cre1c_bron != null ? String(r.cre1c_bron) : '102820002';
+  document.getElementById('d-type').value    = r.cre1c_typeaanbieder != null ? String(r.cre1c_typeaanbieder) : '102820000';
+  document.getElementById('d-tgw').value     = r.cre1c_toegewezenaan || '';
+  document.getElementById('d-datum').value   = r.cre1c_datumbinnenkomst ? new Date(r.cre1c_datumbinnenkomst).toLocaleDateString('nl-BE') : '';
+  document.getElementById('d-camp').value    = r.cre1c_campagneverstuurd ? 'true' : 'false';
+  document.getElementById('d-sum').value     = r.cre1c_aisamenvatting || '';
+  document.getElementById('ai-hint').textContent = r.cre1c_aisamenvatting ? '' : (r.cre1c_ruwebrondata ? '' : 'Geen brondata beschikbaar.');
 
-  // AI automatisch starten als er nog geen samenvatting is
-  if (!r.cre1c_aisamenvatting && r.cre1c_ruwebrondata) {
-    runAI(r);
-  } else if (r.cre1c_aisamenvatting) {
-    document.getElementById('ai-status').textContent = '';
+  const bronEl = document.getElementById('d-bron-txt');
+  const raw = r.cre1c_ruwebrondata || '';
+  if (raw) {
+    bronEl.className = 'bron-text';
+    bronEl.textContent = stripHtml(raw);
   } else {
-    document.getElementById('ai-status').textContent = 'Geen brondata beschikbaar voor analyse.';
+    bronEl.className = 'bron-empty';
+    bronEl.textContent = 'Geen brondata beschikbaar.';
   }
+
+  // reset collapse
+  document.getElementById('bron-body').classList.remove('h');
+  const tog = document.getElementById('bron-tog');
+  tog.classList.remove('c');
+  tog.textContent = '▾';
 }
 
-// ── AI Analyse (automatisch + spam detectie) ──────────────────────
-async function runAI(record) {
-  if (aiAbortController) aiAbortController.abort();
-  aiAbortController = new AbortController();
-
-  const statusEl = document.getElementById('ai-status');
-  const summaryEl = document.getElementById('d-samenvatting');
-  statusEl.textContent = '✦ AI analyseert...';
-  summaryEl.value = '';
-
-  const brondata = record.cre1c_ruwebrondata || '';
-
-  try {
-    const resp = await fetch(ANTHROPIC_API, {
-      method: 'POST',
-      signal: aiAbortController.signal,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
-        system: `Je bent assistent voor Bavaria Motors, een premium autodealer (Ferrari, Aston Martin, Porsche, Lamborghini, Bugatti).
-
-Analyseer het bericht en geef een JSON-antwoord met exact dit formaat:
-{
-  "is_aanbieding": true/false,
-  "reden_afwijzing": "alleen invullen als is_aanbieding false is",
-  "samenvatting": "alleen invullen als is_aanbieding true is - beknopte samenvatting in het Nederlands: aanbieder, wagen met specs, gevraagde prijs, opmerkingen. Max 4 zinnen.",
-  "naam_aanbieder": "naam van de persoon/bedrijf die aanbiedt, of leeg als onbekend"
-}
-
-Een bericht is GEEN aanbieding als het gaat om: spam, automatische systeemberichten, printer/scanner meldingen, nieuwsbrieven, interne IT berichten, of berichten zonder wageninformatie.
-Antwoord ALLEEN met de JSON, geen andere tekst.`,
-        messages: [{ role: 'user', content: brondata }]
-      })
-    });
-
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const text = data.content?.[0]?.text || '';
-
-    let result;
-    try {
-      result = JSON.parse(text.replace(/```json|```/g, '').trim());
-    } catch(e) {
-      throw new Error('AI gaf geen geldig antwoord');
-    }
-
-    // Controleer of dit nog steeds het geselecteerde record is
-    if (currentRecord?.cre1c_aanbiedingid !== record.cre1c_aanbiedingid) return;
-
-    if (!result.is_aanbieding) {
-      // Spam/geen aanbieding → automatisch afwijzen en opslaan
-      statusEl.textContent = '✗ Geen aanbieding: ' + (result.reden_afwijzing || 'onbekende reden');
-      document.getElementById('d-status').value = '102820003';
-      await patchRecord(record.cre1c_aanbiedingid, {
-        cre1c_status: 102820003,
-        cre1c_aisamenvatting: 'GEEN AANBIEDING: ' + (result.reden_afwijzing || '')
-      });
-      // Update lokale cache en herrender
-      record.cre1c_status = 102820003;
-      record.cre1c_aisamenvatting = 'GEEN AANBIEDING: ' + (result.reden_afwijzing || '');
-      filterRecords();
-      showFeedback('info', 'Automatisch afgewezen: ' + (result.reden_afwijzing || 'geen wageninformatie gevonden'));
-    } else {
-      // Echte aanbieding → samenvatting tonen
-      summaryEl.value = result.samenvatting || '';
-      statusEl.textContent = '✓ AI-analyse voltooid';
-      // Naam aanbieder automatisch invullen als leeg
-      if (result.naam_aanbieder && !document.getElementById('d-aanbieder').value) {
-        document.getElementById('d-aanbieder').value = result.naam_aanbieder;
-      }
-      // Samenvatting automatisch opslaan
-      await patchRecord(record.cre1c_aanbiedingid, {
-        cre1c_aisamenvatting: result.samenvatting || ''
-      });
-      record.cre1c_aisamenvatting = result.samenvatting || '';
-      setTimeout(() => { statusEl.textContent = ''; }, 4000);
-    }
-  } catch(err) {
-    if (err.name === 'AbortError') return;
-    statusEl.textContent = 'AI niet beschikbaar — vul samenvatting manueel in';
-    console.error('AI fout:', err);
-  }
-}
-
-async function patchRecord(id, payload) {
-  try {
-    const token = await getToken();
-    await fetch(`${DATAVERSE_URL}/${TABLE}(${id})`, {
-      method: 'PATCH',
-      headers: { ...dvHeaders(token), 'If-Match': '*' },
-      body: JSON.stringify(payload)
-    });
-  } catch(e) { console.error('Patch fout:', e); }
-}
-
-// ── Opslaan ───────────────────────────────────────────────────────
+/* ── save ── */
 async function saveRecord() {
-  if (!currentRecord) return;
+  if (!cur) return;
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = 'Bezig...';
-  const payload = {
-    cre1c_aanbiedingnaam: document.getElementById('d-naam').value,
-    cre1c_status: parseInt(document.getElementById('d-status').value),
-    cre1c_bron: parseInt(document.getElementById('d-bron').value),
-    cre1c_typeaanbieder: parseInt(document.getElementById('d-type').value),
-    cre1c_toegewezenaan: document.getElementById('d-toegewezen').value,
-    cre1c_aisamenvatting: document.getElementById('d-samenvatting').value,
-    cre1c_ruwebrondata: document.getElementById('d-brondata').value
+  const p = {
+    cre1c_aanbiedingnaam:  document.getElementById('d-naam').value,
+    cre1c_naamaanbieder:   document.getElementById('d-aanbieder').value,
+    cre1c_status:          parseInt(document.getElementById('d-status').value),
+    cre1c_bron:            parseInt(document.getElementById('d-bron').value),
+    cre1c_typeaanbieder:   parseInt(document.getElementById('d-type').value),
+    cre1c_toegewezenaan:   document.getElementById('d-tgw').value,
+    cre1c_campagneverstuurd: document.getElementById('d-camp').value === 'true',
+    cre1c_aisamenvatting:  document.getElementById('d-sum').value
   };
   try {
-    const token = await getToken();
-    const resp = await fetch(`${DATAVERSE_URL}/${TABLE}(${currentRecord.cre1c_aanbiedingid})`, {
-      method: 'PATCH',
-      headers: { ...dvHeaders(token), 'If-Match': '*' },
-      body: JSON.stringify(payload)
+    const tok = await token();
+    const resp = await fetch(`${DV}/${TBL}(${cur.cre1c_aanbiedingid})`, {
+      method: 'PATCH', headers: { ...dvH(tok), 'If-Match':'*' }, body: JSON.stringify(p)
     });
-    if (resp.ok || resp.status === 204) {
-      Object.assign(currentRecord, payload);
-      showFeedback('success', '✓ Opgeslagen');
-      document.getElementById('d-titel').textContent = payload.cre1c_aanbiedingnaam || '(Naamloos)';
-      const sel = document.querySelector('.gallery-item.selected .item-title');
-      if (sel) sel.textContent = payload.cre1c_aanbiedingnaam || '(Naamloos)';
-    } else {
-      throw new Error('HTTP ' + resp.status);
-    }
-  } catch(err) {
-    showFeedback('error', 'Fout: ' + err.message);
+    if (!resp.ok && resp.status !== 204) throw new Error('HTTP '+resp.status);
+    Object.assign(cur, p);
+    document.getElementById('d-titel').textContent = p.cre1c_aanbiedingnaam || 'Naamloos';
+    renderGallery();
+    toast('ok','Opgeslagen');
+  } catch(e) {
+    toast('err','Opslaan mislukt: '+e.message);
   } finally {
     btn.disabled = false; btn.textContent = 'Opslaan';
   }
 }
 
+/* ── approve ── */
+async function approveRecord() {
+  if (!cur) return;
+  document.getElementById('d-status').value = '102820001';
+  await saveRecord();
+  try {
+    await fetch(WH, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        aanbiedingId:       cur.cre1c_aanbiedingid,
+        naam:               cur.cre1c_aanbiedingnaam,
+        naamaanbieder:      cur.cre1c_naamaanbieder,
+        status:             'Goedgekeurd',
+        bron:               bronLbl(cur.cre1c_bron),
+        typeaanbieder:      typeLbl(cur.cre1c_typeaanbieder),
+        toegewezenaan:      cur.cre1c_toegewezenaan,
+        datumbinnenkomst:   cur.cre1c_datumbinnenkomst,
+        campagneverstuurd:  cur.cre1c_campagneverstuurd,
+        aisamenvatting:     cur.cre1c_aisamenvatting,
+        ruwebrondata:       cur.cre1c_ruwebrondata
+      })
+    });
+    toast('ok','Goedgekeurd & webhook verstuurd');
+  } catch {
+    toast('wrn','Goedgekeurd, maar webhook mislukt');
+  }
+}
+
+/* ── reject ── */
 async function rejectRecord() {
-  if (!currentRecord) return;
+  if (!cur) return;
   document.getElementById('d-status').value = '102820003';
   await saveRecord();
-  filterRecords();
+  renderGallery();
 }
 
-function showFeedback(type, msg) {
-  const fb = document.getElementById('save-feedback');
-  fb.className = 'save-feedback ' + type;
-  fb.textContent = msg;
-  if (type === 'success' || type === 'info') setTimeout(() => fb.className = 'save-feedback', 4000);
+/* ── delete ── */
+function openDel() {
+  if (!cur) return;
+  document.getElementById('del-msg').textContent = `"${cur.cre1c_aanbiedingnaam||'Naamloos'}" wordt permanent verwijderd. Dit kan niet ongedaan worden gemaakt.`;
+  document.getElementById('del-ov').classList.add('vis');
 }
+function closeDel() { document.getElementById('del-ov').classList.remove('vis'); }
 
-// ── Verwijderen ───────────────────────────────────────────────────
-function openDeleteConfirm() {
-  if (!currentRecord) return;
-  document.getElementById('delete-msg').textContent = '"' + (currentRecord.cre1c_aanbiedingnaam || 'Naamloos') + '" wordt permanent verwijderd. Dit kan niet ongedaan gemaakt worden.';
-  document.getElementById('delete-overlay').classList.add('visible');
-}
-
-function closeDeleteConfirm() {
-  document.getElementById('delete-overlay').classList.remove('visible');
-}
-
-async function confirmDelete() {
-  if (!currentRecord) return;
-  const btn = document.getElementById('delete-confirm-btn');
-  btn.disabled = true; btn.textContent = 'Bezig...';
+async function confirmDel() {
+  if (!cur) return;
+  const btn = document.getElementById('del-btn');
+  btn.disabled = true; btn.textContent = 'Verwijderen...';
   try {
-    const token = await getToken();
-    const resp = await fetch(`${DATAVERSE_URL}/${TABLE}(${currentRecord.cre1c_aanbiedingid})`, {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + token, 'OData-MaxVersion': '4.0', 'OData-Version': '4.0' }
+    const tok = await token();
+    const resp = await fetch(`${DV}/${TBL}(${cur.cre1c_aanbiedingid})`, {
+      method: 'DELETE', headers: { Authorization:'Bearer '+tok, 'OData-MaxVersion':'4.0', 'OData-Version':'4.0' }
     });
-    if (resp.ok || resp.status === 204) {
-      allRecords = allRecords.filter(r => r.cre1c_aanbiedingid !== currentRecord.cre1c_aanbiedingid);
-      currentRecord = null;
-      closeDeleteConfirm();
-      document.getElementById('detail-content').classList.remove('visible');
-      document.getElementById('detail-empty').style.display = 'flex';
-      filterRecords();
-    } else {
-      throw new Error('HTTP ' + resp.status);
-    }
-  } catch(err) {
-    alert('Fout bij verwijderen: ' + err.message);
-  } finally {
+    if (!resp.ok && resp.status !== 204) throw new Error('HTTP '+resp.status);
+    allRec = allRec.filter(r => r.cre1c_aanbiedingid !== cur.cre1c_aanbiedingid);
+    cur = null;
+    closeDel();
+    document.getElementById('detail-content').classList.remove('vis');
+    document.getElementById('detail-empty').style.display = 'flex';
+    renderGallery();
+    toast('ok','Record verwijderd');
+  } catch(e) {
+    toast('err','Verwijderen mislukt: '+e.message);
     btn.disabled = false; btn.textContent = 'Definitief verwijderen';
   }
 }
 
-// ── Nieuw record ──────────────────────────────────────────────────
-function openNewModal() {
-  ['n-naam','n-aanbieder','n-brondata'].forEach(id => document.getElementById(id).value = '');
+/* ── new record ── */
+function openNew() {
+  ['n-naam','n-aanbdr','n-sum'].forEach(id => document.getElementById(id).value='');
   document.getElementById('n-bron').value = '102820002';
   document.getElementById('n-type').value = '102820000';
-  document.getElementById('n-toegewezen').value = '';
-  document.getElementById('new-error').style.display = 'none';
-  document.getElementById('new-overlay').classList.add('visible');
-  setTimeout(() => document.getElementById('n-naam').focus(), 100);
+  document.getElementById('n-tgw').value  = '';
+  const e = document.getElementById('new-err');
+  e.style.display='none'; e.textContent='';
+  document.getElementById('new-ov').classList.add('vis');
+  setTimeout(() => document.getElementById('n-naam').focus(), 80);
 }
+function closeNew() { document.getElementById('new-ov').classList.remove('vis'); }
 
-function closeNewModal() {
-  document.getElementById('new-overlay').classList.remove('visible');
-}
-
-async function saveNewRecord() {
+async function saveNew() {
   const naam = document.getElementById('n-naam').value.trim();
-  if (!naam) {
-    const e = document.getElementById('new-error');
-    e.style.display = 'block'; e.textContent = 'Naam is verplicht.'; return;
-  }
-  const btn = document.getElementById('new-save-btn');
+  const errEl = document.getElementById('new-err');
+  if (!naam) { errEl.style.display='block'; errEl.textContent='Naam aanbieding is verplicht.'; return; }
+  const btn = document.getElementById('new-btn');
   btn.disabled = true; btn.textContent = 'Aanmaken...';
-  const payload = {
-    cre1c_aanbiedingnaam: naam,
-    cre1c_status: 102820000,
-    cre1c_bron: parseInt(document.getElementById('n-bron').value),
-    cre1c_typeaanbieder: parseInt(document.getElementById('n-type').value),
-    cre1c_toegewezenaan: document.getElementById('n-toegewezen').value,
-    cre1c_ruwebrondata: document.getElementById('n-brondata').value,
+  const p = {
+    cre1c_aanbiedingnaam:  naam,
+    cre1c_naamaanbieder:   document.getElementById('n-aanbdr').value,
+    cre1c_status:          102820000,
+    cre1c_bron:            parseInt(document.getElementById('n-bron').value),
+    cre1c_typeaanbieder:   parseInt(document.getElementById('n-type').value),
+    cre1c_toegewezenaan:   document.getElementById('n-tgw').value,
+    cre1c_aisamenvatting:  document.getElementById('n-sum').value,
     cre1c_datumbinnenkomst: new Date().toISOString()
   };
   try {
-    const token = await getToken();
-    const resp = await fetch(`${DATAVERSE_URL}/${TABLE}`, {
-      method: 'POST', headers: dvHeaders(token), body: JSON.stringify(payload)
-    });
-    if (resp.ok || resp.status === 204 || resp.status === 201) {
-      closeNewModal();
-      await loadData();
-    } else {
-      throw new Error('HTTP ' + resp.status + ': ' + (await resp.text()).substring(0,150));
-    }
-  } catch(err) {
-    const e = document.getElementById('new-error');
-    e.style.display = 'block'; e.textContent = 'Fout: ' + err.message;
+    const tok = await token();
+    const resp = await fetch(`${DV}/${TBL}`, { method:'POST', headers:dvH(tok), body:JSON.stringify(p) });
+    if (!resp.ok && resp.status !== 201) throw new Error('HTTP '+resp.status+': '+(await resp.text()).slice(0,120));
+    closeNew();
+    await loadData();
+    toast('ok','Aanbieding aangemaakt');
+  } catch(e) {
+    errEl.style.display='block'; errEl.textContent='Fout: '+e.message;
   } finally {
-    btn.disabled = false; btn.textContent = 'Aanmaken';
+    btn.disabled=false; btn.textContent='Aanmaken';
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
+/* ── UI helpers ── */
+function toggleSec(bodyId, togId) {
+  const b = document.getElementById(bodyId);
+  const t = document.getElementById(togId);
+  const collapsed = b.classList.toggle('h');
+  t.classList.toggle('c', collapsed);
+  t.textContent = collapsed ? '▸' : '▾';
+}
+
+function toast(type, msg) {
+  const c = document.getElementById('tc');
+  const t = document.createElement('div');
+  t.className = 'toast t-'+type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),320); }, 3500);
+}
+
+function stripHtml(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return (d.textContent || d.innerText || '').trim();
+}
+
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function statusBadge(v) {
-  const m = {'102820000':['b-nieuw','Nieuw'],'102820001':['b-goedgekeurd','Goedgekeurd'],'102820002':['b-manueel','Manueel'],'102820003':['b-afgewezen','Afgewezen']};
-  const [c,l] = m[String(v)] || ['b-nieuw','?'];
-  return `<span class="badge ${c}">${l}</span>`;
+function sBadge(v) {
+  const m={'102820000':['bn','Nieuw'],'102820001':['bg','Goedgekeurd'],'102820002':['bm','Manueel'],'102820003':['baf','Afgewezen']};
+  const [c,l]=m[String(v)]||['bn','—']; return `<span class="badge ${c}">${l}</span>`;
 }
-
-function typeBadge(v) {
-  const m = {'102820000':['b-particulier','Particulier'],'102820001':['b-handelaar','Handelaar'],'102820002':['b-broker','Broker']};
-  const [c,l] = m[String(v)] || ['b-particulier','?'];
-  return `<span class="badge ${c}">${l}</span>`;
+function tBadge(v) {
+  const m={'102820000':['bpa','Particulier'],'102820001':['bha','Handelaar'],'102820002':['bbr','Broker']};
+  const [c,l]=m[String(v)]||['bpa','—']; return `<span class="badge ${c}">${l}</span>`;
 }
-
-function bronBadge(v) {
-  const m = {'102820000':['b-whatsapp','WhatsApp'],'102820001':['b-website','Website'],'102820002':['b-email','Email'],'102820003':['b-reallife','Real life']};
-  const [c,l] = m[String(v)] || ['b-email','?'];
-  return `<span class="badge ${c}">${l}</span>`;
+function bBadge(v) {
+  const m={'102820000':['bwp','WhatsApp'],'102820001':['bwb','Website'],'102820002':['bem','Email'],'102820003':['brl','Real life']};
+  const [c,l]=m[String(v)]||['bem','—']; return `<span class="badge ${c}">${l}</span>`;
 }
+function bronLbl(v) { return {'102820000':'WhatsApp','102820001':'Website','102820002':'Email','102820003':'Real life'}[String(v)]||String(v); }
+function typeLbl(v) { return {'102820000':'Particulier','102820001':'Handelaar','102820002':'Broker'}[String(v)]||String(v); }
 </script>
 </body>
 </html>
