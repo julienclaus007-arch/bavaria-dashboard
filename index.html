@@ -614,7 +614,10 @@ function loadScript(src, cb) {
 
 async function initMsal() {
   try {
-    msal = new window.msal.PublicClientApplication(msalCfg);
+    const MPCA = (window.msal && window.msal.PublicClientApplication)
+      || (window.msalBrowser && window.msalBrowser.PublicClientApplication);
+    if (!MPCA) throw new Error('MSAL PublicClientApplication niet gevonden');
+    msal = new MPCA(msalCfg);
     await msal.initialize();
     const rr = await msal.handleRedirectPromise();
     if (rr?.account) { showApp(rr.account); await loadData(); return; }
@@ -633,7 +636,7 @@ async function initMsal() {
 }
 
 window.addEventListener('DOMContentLoaded', () =>
-  loadScript('https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js', initMsal)
+  loadScript('https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.28.0/lib/msal-browser.min.js', initMsal)
 );
 
 function showLogin() {
