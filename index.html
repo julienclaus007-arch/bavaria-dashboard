@@ -252,6 +252,7 @@ body {
 }
 .ba-save { background: var(--gold); color: #03101a; border: 1px solid var(--gold); font-weight: 600; }
 .ba-save:hover { opacity: .85; }
+.ba:disabled { opacity: .45; cursor: not-allowed; }
 .ba-save:disabled { background: var(--border); color: var(--text-3); border-color: var(--border); cursor: not-allowed; opacity: 1; }
 .ba-ok { background: var(--success-bg); color: var(--success-text); border: 1px solid rgba(45,110,62,.4); }
 .ba-ok:hover { background: rgba(45,110,62,.28); }
@@ -1027,18 +1028,26 @@ async function saveRecord(silent) {
     document.getElementById('d-titel').textContent = p.cre1c_aanbiedingnaam || 'Naamloos';
     renderGallery();
     if (!silent) toast('ok','Opgeslagen');
+    return true;
   } catch(e) {
     toast('err','Opslaan mislukt: '+e.message);
+    return false;
   } finally {
     btn.disabled = false; btn.textContent = 'Opslaan';
   }
 }
 
+function setActionsDisabled(on) {
+  document.querySelectorAll('.dh-actions .ba').forEach(b => b.disabled = on);
+}
+
 /* ── approve ── */
 async function approveRecord() {
   if (!cur) return;
+  setActionsDisabled(true);
   document.getElementById('d-status').value = '102820001';
-  await saveRecord(true);
+  const ok = await saveRecord(true);
+  if (!ok) { setActionsDisabled(false); return; }
   try {
     await fetch(WH, {
       method: 'POST', headers: {'Content-Type':'application/json'},
@@ -1059,14 +1068,19 @@ async function approveRecord() {
     toast('ok','Goedgekeurd & webhook verstuurd');
   } catch {
     toast('wrn','Goedgekeurd, maar webhook mislukt');
+  } finally {
+    setActionsDisabled(false);
   }
 }
 
 /* ── reject ── */
 async function rejectRecord() {
   if (!cur) return;
+  setActionsDisabled(true);
   document.getElementById('d-status').value = '102820003';
-  await saveRecord(true);
+  const ok = await saveRecord(true);
+  setActionsDisabled(false);
+  if (!ok) return;
   renderGallery();
   toast('inf','Afgewezen');
 }
