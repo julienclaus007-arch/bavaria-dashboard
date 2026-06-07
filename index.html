@@ -252,6 +252,7 @@ body {
 }
 .ba-save { background: var(--gold); color: #03101a; border: 1px solid var(--gold); font-weight: 600; }
 .ba-save:hover { opacity: .85; }
+.ba:disabled { opacity: .45; cursor: not-allowed; }
 .ba-save:disabled { background: var(--border); color: var(--text-3); border-color: var(--border); cursor: not-allowed; opacity: 1; }
 .ba-ok { background: var(--success-bg); color: var(--success-text); border: 1px solid rgba(45,110,62,.4); }
 .ba-ok:hover { background: rgba(45,110,62,.28); }
@@ -310,8 +311,21 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
 .comlog-ph {
   font-size: 12px; color: var(--text-3); text-align: center;
   padding: 28px; border: 1px dashed var(--border); border-radius: var(--r);
-  font-style: italic; font-weight: 300; letter-spacing: 0.04em;
+  font-style: italic; font-weight: 300; letter-spacing: 0.04em; line-height: 1.6;
 }
+.clog-item {
+  border: 1px solid var(--border); background: var(--bg);
+  border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px;
+}
+.clog-item:last-child { margin-bottom: 0; }
+.clog-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.clog-chan {
+  font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--gold); background: var(--gold-dim);
+  border: 1px solid var(--gold-border); border-radius: 20px; padding: 2px 8px;
+}
+.clog-when { font-size: 10px; color: var(--text-3); margin-left: auto; white-space: nowrap; }
+.clog-body { font-size: 12px; color: var(--text-2); font-weight: 300; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 
 /* ── TOASTS ── */
 #tc {
@@ -459,6 +473,37 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
 .prog-pct  { font-size: 11px; color: var(--gold); width: 32px; text-align: right; flex-shrink: 0; }
 .files-empty { font-size: 12px; color: var(--text-3); font-style: italic; font-weight: 300; text-align: center; padding: 12px 0; }
 .files-spin { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-3); padding: 12px 0; font-weight: 300; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 820px) {
+  body { height: auto; min-height: 100vh; overflow: auto; }
+  #app, #app-inner, #main-content { overflow: visible; }
+  #app.visible { flex-direction: column; }
+  #main-content { flex-direction: column; }
+  #gallery {
+    width: 100%; flex-shrink: 1; max-height: 45vh;
+    border-right: none; border-bottom: 1px solid var(--border);
+  }
+  #detail-panel { overflow: visible; }
+  .fg, .modal-grid { grid-template-columns: 1fr; }
+  .dh { flex-direction: column; align-items: stretch; gap: 12px; }
+  .dh-actions { justify-content: flex-start; }
+  .photo-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .photo-thumb { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+}
+@media (max-width: 560px) {
+  #header { padding: 0 16px; height: 54px; }
+  #user-name { display: none; }
+  #toolbar { padding: 9px 12px; }
+  #sw { max-width: none; min-width: 120px; }
+  #tr { margin-left: 0; width: 100%; }
+  #tr .btn { flex: 1; }
+  #di { padding: 18px 16px 28px; }
+  .dh-title { font-size: 22px; }
+  .dh-actions { flex-wrap: wrap; }
+  .ba { flex: 1; min-width: calc(50% - 4px); text-align: center; }
+  .modal, .modal.wide { padding: 26px 20px; }
+}
 </style>
 </head>
 <body>
@@ -547,7 +592,7 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
               <div class="dh-actions">
                 <button class="ba ba-del" onclick="openDel()">Verwijderen</button>
                 <button class="ba ba-rej" onclick="rejectRecord()">Afwijzen</button>
-                <button class="ba ba-ok"  onclick="approveRecord()">Goedkeuren</button>
+                <button class="ba ba-ok"  onclick="openAppr()">Goedkeuren</button>
                 <button class="ba ba-save" id="save-btn" onclick="saveRecord()">Opslaan</button>
               </div>
             </div>
@@ -674,8 +719,18 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
 
             <!-- COMMUNICATIELOG -->
             <div class="ds">
-              <div class="sh"><div class="stit">Communicatielog</div></div>
-              <div class="comlog-ph">Communicatielog wordt in een volgende versie toegevoegd.</div>
+              <div class="sh coll" onclick="toggleSec('comlog-body','comlog-tog')">
+                <div class="stit">Communicatielog</div>
+                <span class="stog" id="comlog-tog">▾</span>
+              </div>
+              <div class="sb" id="comlog-body">
+                <div id="comlog-loading" class="files-spin" style="display:none">
+                  <div class="spin" style="width:14px;height:14px;margin:0;flex-shrink:0"></div>
+                  Log laden...
+                </div>
+                <div id="comlog-empty" class="comlog-ph" style="display:none"></div>
+                <div id="comlog-list"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -691,6 +746,18 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
       <div class="modal-row">
         <button class="mb-cancel" onclick="closeDel()">Annuleren</button>
         <button class="mb-danger" id="del-btn" onclick="confirmDel()">Definitief verwijderen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approve confirm -->
+  <div class="ov" id="appr-ov">
+    <div class="modal">
+      <h3>Aanbieding goedkeuren?</h3>
+      <p class="modal-msg" id="appr-msg"></p>
+      <div class="modal-row">
+        <button class="mb-cancel" onclick="closeAppr()">Annuleren</button>
+        <button class="mb-primary" id="appr-btn" onclick="confirmAppr()">Goedkeuren &amp; versturen</button>
       </div>
     </div>
   </div>
@@ -803,6 +870,20 @@ async function initMsal() {
 window.addEventListener('DOMContentLoaded', () =>
   loadScript('https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.28.0/lib/msal-browser.min.js', initMsal)
 );
+
+/* keyboard: Esc sluit modals, Enter bevestigt nieuwe aanbieding */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('new-ov').classList.contains('vis')) closeNew();
+    if (document.getElementById('del-ov').classList.contains('vis')) closeDel();
+    if (document.getElementById('appr-ov').classList.contains('vis')) closeAppr();
+  } else if (e.key === 'Enter' && !e.shiftKey
+             && document.getElementById('new-ov').classList.contains('vis')
+             && e.target.tagName === 'INPUT') {
+    e.preventDefault();
+    saveNew();
+  }
+});
 
 function showLogin() {
   document.getElementById('login-screen').style.display = 'flex';
@@ -956,10 +1037,15 @@ function selectRec(r, el) {
   document.getElementById('docs-list').innerHTML = '';
   document.getElementById('upload-progress').innerHTML = '';
   loadFilesSection();
+
+  // reset & load communicatielog
+  document.getElementById('comlog-list').innerHTML = '';
+  document.getElementById('comlog-empty').style.display = 'none';
+  loadComlog();
 }
 
 /* ── save ── */
-async function saveRecord() {
+async function saveRecord(silent) {
   if (!cur) return;
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = 'Bezig...';
@@ -982,19 +1068,36 @@ async function saveRecord() {
     Object.assign(cur, p);
     document.getElementById('d-titel').textContent = p.cre1c_aanbiedingnaam || 'Naamloos';
     renderGallery();
-    toast('ok','Opgeslagen');
+    if (!silent) toast('ok','Opgeslagen');
+    return true;
   } catch(e) {
     toast('err','Opslaan mislukt: '+e.message);
+    return false;
   } finally {
     btn.disabled = false; btn.textContent = 'Opslaan';
   }
 }
 
+function setActionsDisabled(on) {
+  document.querySelectorAll('.dh-actions .ba').forEach(b => b.disabled = on);
+}
+
 /* ── approve ── */
+function openAppr() {
+  if (!cur) return;
+  document.getElementById('appr-msg').textContent =
+    `"${cur.cre1c_aanbiedingnaam||'Naamloos'}" wordt goedgekeurd en naar Teamleader verstuurd.`;
+  document.getElementById('appr-ov').classList.add('vis');
+}
+function closeAppr() { document.getElementById('appr-ov').classList.remove('vis'); }
+function confirmAppr() { closeAppr(); approveRecord(); }
+
 async function approveRecord() {
   if (!cur) return;
+  setActionsDisabled(true);
   document.getElementById('d-status').value = '102820001';
-  await saveRecord();
+  const ok = await saveRecord(true);
+  if (!ok) { setActionsDisabled(false); return; }
   try {
     await fetch(WH, {
       method: 'POST', headers: {'Content-Type':'application/json'},
@@ -1015,15 +1118,21 @@ async function approveRecord() {
     toast('ok','Goedgekeurd & webhook verstuurd');
   } catch {
     toast('wrn','Goedgekeurd, maar webhook mislukt');
+  } finally {
+    setActionsDisabled(false);
   }
 }
 
 /* ── reject ── */
 async function rejectRecord() {
   if (!cur) return;
+  setActionsDisabled(true);
   document.getElementById('d-status').value = '102820003';
-  await saveRecord();
+  const ok = await saveRecord(true);
+  setActionsDisabled(false);
+  if (!ok) return;
   renderGallery();
+  toast('inf','Afgewezen');
 }
 
 /* ── delete ── */
@@ -1155,6 +1264,103 @@ async function graphToken() {
   }
 }
 
+/* ── Communicatielog (Excel in OneDrive) ── */
+const LOG_PATH  = 'BavariaDashboard/communicatielog.xlsx';
+const LOG_SHEET = 'Log';
+
+async function loadComlog() {
+  if (!cur) return;
+  const id      = cur.cre1c_aanbiedingid;
+  const naam    = (cur.cre1c_aanbiedingnaam || '').trim().toLowerCase();
+  const loadEl  = document.getElementById('comlog-loading');
+  const emptyEl = document.getElementById('comlog-empty');
+  const listEl  = document.getElementById('comlog-list');
+
+  loadEl.style.display  = 'flex';
+  emptyEl.style.display = 'none';
+  listEl.innerHTML      = '';
+
+  try {
+    const tok = await graphToken();
+    const url = `${GRAPH}/me/drive/root:/${LOG_PATH}:/workbook/worksheets('${encodeURIComponent(LOG_SHEET)}')/usedRange?$select=values`;
+    const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + tok } });
+
+    loadEl.style.display = 'none';
+    if (resp.status === 404) {
+      comlogEmpty(`Nog geen logbestand. Maak "${LOG_PATH}" aan in OneDrive met een werkblad "${LOG_SHEET}" en kolommen: Aanbieding · Datum · Auteur · Kanaal · Bericht.`);
+      return;
+    }
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    const rows = (await resp.json()).values || [];
+    if (cur?.cre1c_aanbiedingid !== id) return;
+    renderComlog(rows, id, naam);
+  } catch(e) {
+    loadEl.style.display = 'none';
+    comlogEmpty('Communicatielog laden mislukt: ' + e.message);
+  }
+}
+
+function comlogEmpty(msg) {
+  const e = document.getElementById('comlog-empty');
+  e.textContent = msg; e.style.display = 'block';
+}
+
+function renderComlog(rows, id, naam) {
+  const listEl = document.getElementById('comlog-list');
+  listEl.innerHTML = '';
+  if (rows.length < 2) { comlogEmpty('Logbestand is leeg.'); return; }
+
+  const header = rows[0].map(h => String(h || '').trim().toLowerCase());
+  const col = n => header.indexOf(n);
+  const ciKey = [col('aanbieding'), col('aanbiedingid'), col('aanbieding id')].find(i => i >= 0) ?? 0;
+  const ciDatum = col('datum'), ciAuteur = col('auteur'), ciKanaal = col('kanaal'), ciBericht = col('bericht');
+  const idLow = String(id).toLowerCase();
+
+  const matches = rows.slice(1).filter(r => {
+    const key = String(r[ciKey] || '').trim().toLowerCase();
+    return key && (key === idLow || (naam && key === naam));
+  });
+
+  if (!matches.length) { comlogEmpty('Geen communicatie gelogd voor deze aanbieding.'); return; }
+
+  matches.sort((a, b) => {
+    const da = ciDatum >= 0 ? Date.parse(a[ciDatum]) : NaN;
+    const db = ciDatum >= 0 ? Date.parse(b[ciDatum]) : NaN;
+    if (isNaN(da) && isNaN(db)) return 0;
+    if (isNaN(da)) return 1;
+    if (isNaN(db)) return -1;
+    return db - da;
+  });
+
+  matches.forEach(r => {
+    const kanaal = ciKanaal  >= 0 ? String(r[ciKanaal]  || '').trim() : '';
+    const datum  = ciDatum   >= 0 ? String(r[ciDatum]   || '').trim() : '';
+    const auteur = ciAuteur  >= 0 ? String(r[ciAuteur]  || '').trim() : '';
+    const bericht= ciBericht >= 0 ? String(r[ciBericht] || '')        : '';
+
+    const item = document.createElement('div');
+    item.className = 'clog-item';
+    const meta = document.createElement('div');
+    meta.className = 'clog-meta';
+    if (kanaal) {
+      const c = document.createElement('span');
+      c.className = 'clog-chan'; c.textContent = kanaal;
+      meta.appendChild(c);
+    }
+    const when = document.createElement('span');
+    when.className = 'clog-when';
+    when.textContent = [auteur, datum].filter(Boolean).join(' · ');
+    meta.appendChild(when);
+    const body = document.createElement('div');
+    body.className = 'clog-body';
+    body.textContent = bericht;
+    item.appendChild(meta);
+    item.appendChild(body);
+    listEl.appendChild(item);
+  });
+}
+
 async function loadFilesSection() {
   if (!cur) return;
   const id = cur.cre1c_aanbiedingid;
@@ -1202,11 +1408,15 @@ function renderFiles(items) {
       const thumb = document.createElement('div');
       thumb.className = 'photo-thumb';
       thumb.innerHTML = `
-        <img src="${esc(dlUrl)}" alt="${esc(p.name)}" loading="lazy">
+        <img loading="lazy">
         <div class="photo-overlay">
-          <button class="photo-btn photo-btn-dl" title="Downloaden" onclick="window.open('${esc(dlUrl)}','_blank')">↓</button>
-          <button class="photo-btn photo-btn-del" title="Verwijderen" onclick="deleteFile('${esc(p.id)}','${esc(p.name)}')">✕</button>
+          <button class="photo-btn photo-btn-dl" title="Downloaden">↓</button>
+          <button class="photo-btn photo-btn-del" title="Verwijderen">✕</button>
         </div>`;
+      const img = thumb.querySelector('img');
+      img.src = dlUrl; img.alt = p.name;
+      thumb.querySelector('.photo-btn-dl').addEventListener('click', () => dlUrl && window.open(dlUrl, '_blank'));
+      thumb.querySelector('.photo-btn-del').addEventListener('click', () => deleteFile(p.id, p.name));
       photosGrid.appendChild(thumb);
     });
     photosSection.style.display = 'block';
@@ -1223,13 +1433,18 @@ function renderFiles(items) {
       item.innerHTML = `
         <div class="doc-icon ${fileIconCls(ext)}">${fileIconLbl(ext)}</div>
         <div class="doc-info">
-          <div class="doc-name" title="${esc(d.name)}">${esc(d.name)}</div>
+          <div class="doc-name"></div>
           <div class="doc-size">${fmtSize(d.size)}</div>
         </div>
         <div class="doc-actions">
-          <button class="doc-btn" onclick="window.open('${esc(dlUrl)}','_blank')">Downloaden</button>
-          <button class="doc-btn doc-btn-del" onclick="deleteFile('${esc(d.id)}','${esc(d.name)}')">Verwijderen</button>
+          <button class="doc-btn">Downloaden</button>
+          <button class="doc-btn doc-btn-del">Verwijderen</button>
         </div>`;
+      const nameEl = item.querySelector('.doc-name');
+      nameEl.textContent = d.name; nameEl.title = d.name;
+      const [dlBtn, delBtn] = item.querySelectorAll('.doc-btn');
+      dlBtn.addEventListener('click', () => window.open(dlUrl, '_blank'));
+      delBtn.addEventListener('click', () => deleteFile(d.id, d.name));
       docsList.appendChild(item);
     });
     docsSection.style.display = 'block';
