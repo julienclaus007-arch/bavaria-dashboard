@@ -311,8 +311,21 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
 .comlog-ph {
   font-size: 12px; color: var(--text-3); text-align: center;
   padding: 28px; border: 1px dashed var(--border); border-radius: var(--r);
-  font-style: italic; font-weight: 300; letter-spacing: 0.04em;
+  font-style: italic; font-weight: 300; letter-spacing: 0.04em; line-height: 1.6;
 }
+.clog-item {
+  border: 1px solid var(--border); background: var(--bg);
+  border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px;
+}
+.clog-item:last-child { margin-bottom: 0; }
+.clog-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.clog-chan {
+  font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--gold); background: var(--gold-dim);
+  border: 1px solid var(--gold-border); border-radius: 20px; padding: 2px 8px;
+}
+.clog-when { font-size: 10px; color: var(--text-3); margin-left: auto; white-space: nowrap; }
+.clog-body { font-size: 12px; color: var(--text-2); font-weight: 300; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 
 /* ── TOASTS ── */
 #tc {
@@ -706,8 +719,18 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
 
             <!-- COMMUNICATIELOG -->
             <div class="ds">
-              <div class="sh"><div class="stit">Communicatielog</div></div>
-              <div class="comlog-ph">Communicatielog wordt in een volgende versie toegevoegd.</div>
+              <div class="sh coll" onclick="toggleSec('comlog-body','comlog-tog')">
+                <div class="stit">Communicatielog</div>
+                <span class="stog" id="comlog-tog">▾</span>
+              </div>
+              <div class="sb" id="comlog-body">
+                <div id="comlog-loading" class="files-spin" style="display:none">
+                  <div class="spin" style="width:14px;height:14px;margin:0;flex-shrink:0"></div>
+                  Log laden...
+                </div>
+                <div id="comlog-empty" class="comlog-ph" style="display:none"></div>
+                <div id="comlog-list"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -1014,6 +1037,11 @@ function selectRec(r, el) {
   document.getElementById('docs-list').innerHTML = '';
   document.getElementById('upload-progress').innerHTML = '';
   loadFilesSection();
+
+  // reset & load communicatielog
+  document.getElementById('comlog-list').innerHTML = '';
+  document.getElementById('comlog-empty').style.display = 'none';
+  loadComlog();
 }
 
 /* ── save ── */
@@ -1234,6 +1262,103 @@ async function graphToken() {
   } catch {
     return (await msal.acquireTokenPopup(req)).accessToken;
   }
+}
+
+/* ── Communicatielog (Excel in OneDrive) ── */
+const LOG_PATH  = 'BavariaDashboard/communicatielog.xlsx';
+const LOG_SHEET = 'Log';
+
+async function loadComlog() {
+  if (!cur) return;
+  const id      = cur.cre1c_aanbiedingid;
+  const naam    = (cur.cre1c_aanbiedingnaam || '').trim().toLowerCase();
+  const loadEl  = document.getElementById('comlog-loading');
+  const emptyEl = document.getElementById('comlog-empty');
+  const listEl  = document.getElementById('comlog-list');
+
+  loadEl.style.display  = 'flex';
+  emptyEl.style.display = 'none';
+  listEl.innerHTML      = '';
+
+  try {
+    const tok = await graphToken();
+    const url = `${GRAPH}/me/drive/root:/${LOG_PATH}:/workbook/worksheets('${encodeURIComponent(LOG_SHEET)}')/usedRange?$select=values`;
+    const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + tok } });
+
+    loadEl.style.display = 'none';
+    if (resp.status === 404) {
+      comlogEmpty(`Nog geen logbestand. Maak "${LOG_PATH}" aan in OneDrive met een werkblad "${LOG_SHEET}" en kolommen: Aanbieding · Datum · Auteur · Kanaal · Bericht.`);
+      return;
+    }
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    const rows = (await resp.json()).values || [];
+    if (cur?.cre1c_aanbiedingid !== id) return;
+    renderComlog(rows, id, naam);
+  } catch(e) {
+    loadEl.style.display = 'none';
+    comlogEmpty('Communicatielog laden mislukt: ' + e.message);
+  }
+}
+
+function comlogEmpty(msg) {
+  const e = document.getElementById('comlog-empty');
+  e.textContent = msg; e.style.display = 'block';
+}
+
+function renderComlog(rows, id, naam) {
+  const listEl = document.getElementById('comlog-list');
+  listEl.innerHTML = '';
+  if (rows.length < 2) { comlogEmpty('Logbestand is leeg.'); return; }
+
+  const header = rows[0].map(h => String(h || '').trim().toLowerCase());
+  const col = n => header.indexOf(n);
+  const ciKey = [col('aanbieding'), col('aanbiedingid'), col('aanbieding id')].find(i => i >= 0) ?? 0;
+  const ciDatum = col('datum'), ciAuteur = col('auteur'), ciKanaal = col('kanaal'), ciBericht = col('bericht');
+  const idLow = String(id).toLowerCase();
+
+  const matches = rows.slice(1).filter(r => {
+    const key = String(r[ciKey] || '').trim().toLowerCase();
+    return key && (key === idLow || (naam && key === naam));
+  });
+
+  if (!matches.length) { comlogEmpty('Geen communicatie gelogd voor deze aanbieding.'); return; }
+
+  matches.sort((a, b) => {
+    const da = ciDatum >= 0 ? Date.parse(a[ciDatum]) : NaN;
+    const db = ciDatum >= 0 ? Date.parse(b[ciDatum]) : NaN;
+    if (isNaN(da) && isNaN(db)) return 0;
+    if (isNaN(da)) return 1;
+    if (isNaN(db)) return -1;
+    return db - da;
+  });
+
+  matches.forEach(r => {
+    const kanaal = ciKanaal  >= 0 ? String(r[ciKanaal]  || '').trim() : '';
+    const datum  = ciDatum   >= 0 ? String(r[ciDatum]   || '').trim() : '';
+    const auteur = ciAuteur  >= 0 ? String(r[ciAuteur]  || '').trim() : '';
+    const bericht= ciBericht >= 0 ? String(r[ciBericht] || '')        : '';
+
+    const item = document.createElement('div');
+    item.className = 'clog-item';
+    const meta = document.createElement('div');
+    meta.className = 'clog-meta';
+    if (kanaal) {
+      const c = document.createElement('span');
+      c.className = 'clog-chan'; c.textContent = kanaal;
+      meta.appendChild(c);
+    }
+    const when = document.createElement('span');
+    when.className = 'clog-when';
+    when.textContent = [auteur, datum].filter(Boolean).join(' · ');
+    meta.appendChild(when);
+    const body = document.createElement('div');
+    body.className = 'clog-body';
+    body.textContent = bericht;
+    item.appendChild(meta);
+    item.appendChild(body);
+    listEl.appendChild(item);
+  });
 }
 
 async function loadFilesSection() {
