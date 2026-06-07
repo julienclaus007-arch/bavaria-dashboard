@@ -579,7 +579,7 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
               <div class="dh-actions">
                 <button class="ba ba-del" onclick="openDel()">Verwijderen</button>
                 <button class="ba ba-rej" onclick="rejectRecord()">Afwijzen</button>
-                <button class="ba ba-ok"  onclick="approveRecord()">Goedkeuren</button>
+                <button class="ba ba-ok"  onclick="openAppr()">Goedkeuren</button>
                 <button class="ba ba-save" id="save-btn" onclick="saveRecord()">Opslaan</button>
               </div>
             </div>
@@ -727,6 +727,18 @@ textarea.fi { resize: vertical; min-height: 100px; line-height: 1.6; }
     </div>
   </div>
 
+  <!-- Approve confirm -->
+  <div class="ov" id="appr-ov">
+    <div class="modal">
+      <h3>Aanbieding goedkeuren?</h3>
+      <p class="modal-msg" id="appr-msg"></p>
+      <div class="modal-row">
+        <button class="mb-cancel" onclick="closeAppr()">Annuleren</button>
+        <button class="mb-primary" id="appr-btn" onclick="confirmAppr()">Goedkeuren &amp; versturen</button>
+      </div>
+    </div>
+  </div>
+
   <!-- New record -->
   <div class="ov" id="new-ov">
     <div class="modal wide">
@@ -841,6 +853,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('new-ov').classList.contains('vis')) closeNew();
     if (document.getElementById('del-ov').classList.contains('vis')) closeDel();
+    if (document.getElementById('appr-ov').classList.contains('vis')) closeAppr();
   } else if (e.key === 'Enter' && !e.shiftKey
              && document.getElementById('new-ov').classList.contains('vis')
              && e.target.tagName === 'INPUT') {
@@ -1042,6 +1055,15 @@ function setActionsDisabled(on) {
 }
 
 /* ── approve ── */
+function openAppr() {
+  if (!cur) return;
+  document.getElementById('appr-msg').textContent =
+    `"${cur.cre1c_aanbiedingnaam||'Naamloos'}" wordt goedgekeurd en naar Teamleader verstuurd.`;
+  document.getElementById('appr-ov').classList.add('vis');
+}
+function closeAppr() { document.getElementById('appr-ov').classList.remove('vis'); }
+function confirmAppr() { closeAppr(); approveRecord(); }
+
 async function approveRecord() {
   if (!cur) return;
   setActionsDisabled(true);
